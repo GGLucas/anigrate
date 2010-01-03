@@ -1,0 +1,354 @@
+#!/usr/bin/env python2
+import sys
+import os
+import datetime
+
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
+# {{{ Help
+"""
+Usage Examples
+--------------
+
+ani new anime: clannad -- Adds a series with a season
+ani watch: clannad -- Increments episode count, adds a season if last ep
+ani watch +3: clannad -- Watch 3 episodes on clannad's current season
+ani rate 8: clannad -- Set score
+ani drop: clannad -- Set dropped
+ani undrop: clannad -- Set undropped
+ani season add: clannad -- Add a new season
+ani season add 8: clannad -- Add season with number 8
+ani season remove: clannad -- Remove current season
+ani season remove 1: clannad -- Remove season 1
+ani season active 4: clannad -- Set active season
+ani season length 4 24: clannad -- Set season 4 length 24
+ani length 24: clannad -- Set current season length 24
+"""
+
+HELPTEXT = """
+Usage: %s [COMMAND] [ARGS...]: [SELECTOR]
+Manage list of watched anime and television series.
+
+Database:
+    By default anigrate uses an sqlite database in $HOME/.anigrate/db,
+    see the example anigraterc for all the other possibilities.
+
+Commands:
+    initdb
+        Initialise the database with all the necessary tables.
+
+    new [category]: (selector)
+        Create a new series entry with name specified by (selector).
+        Optionally you can enter a category to mark it as.
+
+    rate <score>: (selector)
+        Rate all series matched by (selector) with <score>.
+
+    [un]drop: (selector)
+        Mark all series matched by (selector) as dropped or not dropped.
+
+    watch [num]: (selector)
+        Change the episodes watched count. Without [num] specified it will be
+        incremented by one. Using specifiers like "+3" or "-2" you can increment
+        or decrement the watched count by that number. Specifying an absolute
+        number will watch up to that episode or remove everything from that
+        episode on. Watch always uses the currently active season.
+
+    season add [num]: [selector]
+        Add a new season, if num is specified the season number is set to that, 
+        otherwise it will default to one more than the previous season.
+
+    season remove [num]: [selector]
+        Remove the season with number [num] from a series. If num is not
+        specified the currently active season will be removed.
+
+    season length <season> <length>: [selector]
+        Set a season's length in episodes.
+
+    length <length>: [selector]
+        Set the active season's length in episodes.
+
+    season active <num>: [selector]
+        Set season with number <num> as the active season. Can be a relative 
+        offset like +1 or -2.
+
+"""
+# }}}
+
+# {{{ Constants
+CONF_DIR = os.getenv("HOME")+"/.anigrate"
+DB_LOCATION = CONF_DIR+"/db"
+
+# }}}
+
+# {{{ Models
+Base = declarative_base()
+Session = sessionmaker()
+
+class Series(Base):
+    """An entire series."""
+    __tablename__ = "series"
+    id = Column(Integer, primary_key=True)
+    rating = Column(Integer, default=0)
+    title = Column(String(255))
+
+    current = Column(Integer)
+    ctime = Column(DateTime)
+    mtime = Column(DateTime)
+    dropped = Column(Boolean, default=False)
+    category = Column(String(255), default="")
+    duration = Column(Integer, default=22)
+
+class Season(Base):
+    """One season of a series."""
+    __tablename__ = "seasons"
+    id = Column(Integer, primary_key=True)
+    num = Column(Integer)
+
+    series = Column(ForeignKey("series.id"))
+    episode_total = Column(Integer, default=0)
+    current_watched = Column(Integer, default=0)
+
+class Watched(Base):
+    """A 'watched episodes' event attached to a season."""
+    __tablename__ = "watched"
+    id = Column(Integer, primary_key=True)
+
+    season = Column(ForeignKey("seasons.id"))
+
+    startep = Column(Integer)
+    finishep = Column(Integer)
+# }}}
+
+# {{{ Utility functions
+commands = {}
+
+def command(func, name=None, cmds=None):
+    """Register a function as a command."""
+    # Get command dict
+    if not cmds:
+        global commands
+    else:
+        commands = cmds
+
+    commands[(name or func.__name__)] = func
+    return func
+
+def getcommand(name, cmds=None):
+    """Get a command by name."""
+    # Get command dict
+    if not cmds:
+        global commands
+    else:
+        commands = cmds
+
+    # Exact match
+    if name in commands:
+        return commands[name]
+
+    # Prefix match
+    candidate = filter(lambda x: x.startswith(name), commands.keys())
+
+    if len(candidate) == 1:
+        return commands[candidate[0]]
+    else:
+        return None
+
+def dbbind():
+    """Bind the sqlalchemy database engine and return the session."""
+    if not os.access(CONF_DIR, os.F_OK):
+        os.mkdir(CONF_DIR)
+        initdb()
+
+    engine = create_engine('sqlite:///'+DB_LOCATION)
+    Base.metadata.bind = engine
+    Session.configure(bind=engine)
+
+    return Session()
+
+def getselection(session, selector):
+    """Get all anime matching a selector"""
+    return session.query(Series).filter(Series.title.startswith(selector)).all()
+
+# }}}
+
+# {{{ Commands
+## {{{ initdb
+@command
+def initdb(arg=None, selector=None):
+    """Initialise the database for use."""
+    dbbind()
+    Base.metadata.create_all()
+# }}}
+
+## {{{ new
+@command
+def new(arg, selector):
+    if not selector:
+        print("Error: selector required.")
+        return
+
+    # Bind database
+    session = dbbind()
+
+    # Don't create if one already exists
+    if session.query(Series).filter(Series.title == selector).all():
+        print("Error: A series with this name already exists...")
+        return
+
+    # Create a new series
+    series = Series(title=selector, current=1)
+    series.ctime = datetime.datetime.now()
+    series.mtime = datetime.datetime.now()
+
+    ## Category
+    if arg:
+        series.category = arg[2]
+
+    ## First season
+    season = Season(num=1)
+    season.series = series.id
+
+    session.add(series)
+    session.add(season)
+    session.commit()
+# }}}
+
+# {{{ rate
+@command
+def rate(arg, selector):
+    """Set the rating/score for a series."""
+    if not selector:
+        print("Error: selector required.")
+        return
+
+    if not arg:
+        print("Error: rating required.")
+        return
+
+    try:
+        score = int(arg[0])
+    except:
+        print("Error: rating is not a valid number.")
+        return
+
+    # Bind database
+    session = dbbind()
+    selection = getselection(session, selector)
+
+    for sel in selection:
+        sel.rating = score
+
+    session.commit()
+# }}}
+    
+# {{{ [un]drop
+@command
+def drop(arg, selector):
+    """Drop a series."""
+    if not selector:
+        print("Error: selector required.")
+        return
+
+    # Bind database
+    session = dbbind()
+    selection = getselection(session, selector)
+
+    for sel in selection:
+        sel.dropped = True
+
+    session.commit()
+
+@command
+def undrop(arg, selector):
+    """Undrop a series."""
+    if not selector:
+        print("Error: selector required.")
+        return
+
+    # Bind database
+    session = dbbind()
+    selection = getselection(session, selector)
+
+    for sel in selection:
+        sel.dropped = False
+
+    session.commit()
+# }}}
+
+# {{{ season add
+@command
+def rate(arg, selector):
+    """Set the rating/score for a series."""
+    if not selector:
+        print("Error: selector required.")
+        return
+
+    if not arg:
+        print("Error: rating required.")
+        return
+
+    try:
+        score = int(arg[0])
+    except:
+        print("Error: rating is not a valid number.")
+        return
+
+    # Bind database
+    session = dbbind()
+    selection = getselection(session, selector)
+
+    for sel in selection:
+        sel.rating = score
+
+    session.commit()
+# }}}
+
+# }}}
+
+# {{{ Main function
+def main():
+    # Retrieve arguments
+    arg = sys.argv[1:]
+
+    # Intercept help
+    if not arg or arg[0] in ("help", "--help", "-h"):
+        print(HELPTEXT%sys.argv[0])
+        return
+
+    # Get selector and arguments
+    ## Check if there exists a selector
+    if filter(lambda x: x.endswith(":"), arg):
+        selector = []
+
+        # Build selector
+        for i,x in enumerate(reversed(arg[1:])):
+            if x.endswith(":"):
+                break
+            else:
+                selector.insert(0, x)
+                arg.remove(x)
+
+        selector = " ".join(selector)
+
+        # Remove colon
+        arg[-1] = arg[-1][:-1]
+    else:
+        selector=None
+
+    # Call the command
+    cmd = getcommand(arg[0])
+
+    if cmd:
+        cmd(arg[1:], selector)
+    else:
+        print("** Invalid Command: %s" % arg[0])
+        print(HELPTEXT%sys.argv[0])
+# }}}
+
+# Call main function
+if __name__ == '__main__':
+    main()
+# vim: set fdm=marker :
