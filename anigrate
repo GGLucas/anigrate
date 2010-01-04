@@ -4,6 +4,7 @@ import os
 import datetime
 
 from decorator import decorator
+from ConfigParser import ConfigParser
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, create_engine
 from sqlalchemy.orm import sessionmaker
@@ -11,25 +12,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import and_, or_, not_
 
 # {{{ Help
-"""
-Usage Examples
---------------
-
-ani new anime: clannad -- Adds a series with a season
-ani watch: clannad -- Increments episode count, adds a season if last ep
-ani watch +3: clannad -- Watch 3 episodes on clannad's current season
-ani rate 8: clannad -- Set score
-ani drop: clannad -- Set dropped
-ani undrop: clannad -- Set undropped
-ani season add: clannad -- Add a new season
-ani season add 8: clannad -- Add season with number 8
-ani season remove: clannad -- Remove current season
-ani season remove 1: clannad -- Remove season 1
-ani season active 4: clannad -- Set active season
-ani season length 4 24: clannad -- Set season 4 length 24
-ani length 24: clannad -- Set current season length 24
-"""
-
 HELPTEXT = """
 Usage: %s [COMMAND] [ARGS...]: [SELECTOR]
 Manage list of watched anime and television series.
@@ -131,6 +113,7 @@ Selectors:
 # {{{ Constants
 CONF_DIR = os.getenv("HOME")+"/.anigrate"
 DB_LOCATION = CONF_DIR+"/db"
+CONF_LOCATION = CONF_DIR+"/config"
 
 COLOR = {
     "normal": "\033[0m",
@@ -293,15 +276,25 @@ def getcommand(name, cmds=None):
 
 def dbbind():
     """Bind the sqlalchemy database engine and return the session."""
-    if not os.access(CONF_DIR, os.F_OK):
-        os.mkdir(CONF_DIR)
+    # Try to read config
+    config = ConfigParser()
+    config.read([CONF_LOCATION,])
 
-    engine = create_engine('sqlite:///'+DB_LOCATION)
-    Base.metadata.bind = engine
-    Session.configure(bind=engine)
+    if config.has_option("database", "uri"):
+        engine = create_engine(config.get("database", "uri"))
+        Base.metadata.bind = engine
+        Session.configure(bind=engine)
+    else:
+        # Default location
+        if not os.access(CONF_DIR, os.F_OK):
+            os.mkdir(CONF_DIR)
 
-    if not os.access(DB_LOCATION, os.F_OK):
-        initdb(session=Session())
+        engine = create_engine('sqlite:///'+DB_LOCATION)
+        Base.metadata.bind = engine
+        Session.configure(bind=engine)
+
+        if not os.access(DB_LOCATION, os.F_OK):
+            initdb(session=Session())
 
     return Session()
 
