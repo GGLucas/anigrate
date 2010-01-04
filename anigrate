@@ -41,20 +41,20 @@ Commands:
     initdb
         Initialise the database with all the necessary tables.
 
-    list: (selector)
-        List all series matched by (selector).
+    list: [selector]
+        List all series matched by [selector].
         If no selector is given, match all series.
 
     log: (selector)
         Show a detailed log for series matching (selector).
 
-    hist [num]: (selector)
+    hist [num]: [selector]
         Show the last [num] watched episode entries for series matching
-        (selector). Num defaults to 15, matches all series if no selector
+        [selector]. Num defaults to 15, matches all series if no selector
         is specified.
 
-    add [category]: (selector)
-        Add a new series entry with name specified by (selector).
+    add [category]: (name)
+        Add a new series entry with name specified by (name).
         Optionally you can enter a category to mark it as.
 
     remove: (selector)
@@ -66,8 +66,17 @@ Commands:
     [un]drop: (selector)
         Mark all series matched by (selector) as dropped or not dropped.
 
-    length <length>: [selector]
+    length <length>: (selector)
         Set the active season's length in episodes.
+
+    duration <time>: (selector)
+        Set the average duration of an episode in series matching (selector).
+        This is used to calculate total watching time, defaults to 23 minutes
+        per episode for every series.
+
+    time: [selector]
+        Get the total watching time spent on series matching [selector].
+        If no selector is given the total time for all series is given.
 
     watch [num]: (selector)
         Change the episodes watched count. Without [num] specified it will be
@@ -76,18 +85,18 @@ Commands:
         number will watch up to that episode or remove everything from that
         episode on. Watch always uses the currently active season.
 
-    season add [num]: [selector]
+    season add [num]: (selector)
         Add a new season, if num is specified the season number is set to that, 
         otherwise it will default to one more than the previous season.
 
-    season remove [num]: [selector]
+    season remove [num]: (selector)
         Remove the season with number [num] from a series. If num is not
         specified the currently active season will be removed.
 
-    season length <season> <length>: [selector]
+    season length <season> <length>: (selector)
         Set a season's length in episodes.
 
-    season active <num>: [selector]
+    season active <num>: (selector)
         Set season with number <num> as the active season. Can be a relative 
         offset like +1 or -2.
 
@@ -162,12 +171,13 @@ class Series(Base):
     mtime = Column(DateTime)
     dropped = Column(Boolean, default=False)
     category = Column(String(255), default="")
-    duration = Column(Integer, default=22)
+    duration = Column(Integer, default=23)
     finished = Column(Boolean, default=False)
 
     seasontotal = Column(Integer, default=1)
     epscurrent = Column(Integer, default=0)
     epstotal = Column(Integer, default=0)
+    epsall = Column(Integer, default=0)
 
     def getseason(self, session, num=None):
         """Retrieve a season based on its number."""
@@ -181,6 +191,7 @@ class Series(Base):
         """Evaluate whether the series is finished."""
         self.finished = True
         self.seasontotal = 0
+        self.epsall = 0
 
         for season in session.query(Season).filter(
                 Season.series == self.id).all():
@@ -188,6 +199,7 @@ class Series(Base):
             or season.episode_total == 0:
                 self.finished = False
 
+            self.epsall += season.current_watched
             if season.num == self.current:
                 self.epscurrent = season.current_watched
                 self.epstotal = season.episode_total
@@ -279,18 +291,19 @@ def getselection(session, selector, list=True):
     mode = "prefix"
 
     for opt in selector:
-        if opt == "+finished" or opt == "+completed":
-            q = q.filter(Series.finished == True)
-            selector.remove(opt)
-        elif opt == "+watching":
-            q = q.filter(Series.finished == False)
-            selector.remove(opt)
-        elif opt == "+dropped":
-            q = q.filter(Series.dropped == True)
-            selector.remove(opt)
-        elif opt == "+undropped":
-            q = q.filter(Series.dropped == False)
-            selector.remove(opt)
+        if opt.startswith("+"):
+            if "+finished".startswith(opt) or "+completed".startswith(opt):
+                q = q.filter(Series.finished == True)
+                selector.remove(opt)
+            elif "+watching".startswith(opt):
+                q = q.filter(Series.finished == False)
+                selector.remove(opt)
+            elif "+dropped".startswith(opt):
+                q = q.filter(Series.dropped == True)
+                selector.remove(opt)
+            elif "+undropped".startswith(opt):
+                q = q.filter(Series.dropped == False)
+                selector.remove(opt)
         elif opt.startswith("%"):
             mode = opt[1:]
             selector.remove(opt)
@@ -301,11 +314,11 @@ def getselection(session, selector, list=True):
     if selector:
         selector = " ".join(selector)
 
-        if mode == "exact":
+        if "exact".startswith(mode):
             q = q.filter(Series.title.ilike(selector))
-        elif mode == "contains":
+        elif "contains".startswith(mode):
             q = q.filter(Series.title.contains(selector))
-        elif mode == "suffix":
+        elif "suffix".startswith(mode):
             q = q.filter(Series.title.endswith(selector))
         else:
             q = q.filter(Series.title.startswith(selector))
@@ -396,19 +409,18 @@ def initdb(arg=None, selector=None, session=None):
 @command()
 def add(arg, selector):
     if not selector:
-        print("Error: selector required.")
-        return
+        return "Error: selector required."
 
     # Bind database
     session = dbbind()
+    selector = " ".join(selector)
 
     # Don't create if one already exists
-    if session.query(Series).filter(Series.title == selector).all():
-        print("Error: A series with this name already exists...")
-        return
+    if session.query(Series).filter(Series.title.ilike(selector)).all():
+        return "Error: A series with this name already exists..."
 
     # Create a new series
-    series = Series(title=" ".join(selector), current=1)
+    series = Series(title=selector, current=1)
     series.ctime = datetime.datetime.now()
     series.mtime = datetime.datetime.now()
 
@@ -545,6 +557,53 @@ def length(arg, selector):
                 (season.num, length, sel.title))
 
         sel.eval_finished(session)
+
+    session.commit()
+# }}}
+
+# {{{ duration
+@command()
+def duration(arg, selector):
+    """Set the duration per episode for a series."""
+    if not selector:
+        return "Error: selector required."
+
+    if not arg:
+        return "Error: duration required."
+
+    try:
+        duration = int(arg[0])
+    except:
+        return "Error: duration is not a valid number."
+
+    # Bind database
+    session = dbbind()
+    selection = getselection(session, selector)
+
+    for sel in selection:
+        sel.duration = duration
+
+        print("Setting duration to %d: %s..."%
+                (duration, sel.title))
+
+    session.commit()
+# }}}
+
+# {{{ time
+@command()
+def time(arg, selector):
+    """Set the duration per episode for a series."""
+    # Bind database
+    session = dbbind()
+    selection = getselection(session, selector)
+    total = 0
+
+    for sel in selection:
+        total += sel.epsall*sel.duration
+
+    totaldays = total/1440
+    print("Total time spent watching:")
+    print("%.1f days = %d minutes" % (totaldays, total))
 
     session.commit()
 # }}}
@@ -848,10 +907,7 @@ def list(arg, selector):
     session = dbbind()
 
     # Get selection
-    if selector:
-        selection = getselection(session, selector, list=False)
-    else:
-        selection = session.query(Series)
+    selection = getselection(session, selector, list=False)
 
     # Category
     if arg:
@@ -899,7 +955,7 @@ def main():
         # Remove colon
         arg[-1] = arg[-1][:-1]
     else:
-        selector=None
+        selector=[]
 
     # Call the command
     cmd = getcommand(arg[0])
