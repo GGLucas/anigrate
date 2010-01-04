@@ -41,13 +41,17 @@ Commands:
     initdb
         Initialise the database with all the necessary tables.
 
-    list [category]: (selector)
-        List all series in [category] matched by (selector).
-        If no selector is given, match all series in [category].
-        If no category is given, match series in any category.
+    list: (selector)
+        List all series matched by (selector).
+        If no selector is given, match all series.
 
     log: (selector)
         Show a detailed log for series matching (selector).
+
+    hist [num]: (selector)
+        Show the last [num] watched episode entries for series matching
+        (selector). Num defaults to 15, matches all series if no selector
+        is specified.
 
     add [category]: (selector)
         Add a new series entry with name specified by (selector).
@@ -87,6 +91,30 @@ Commands:
         Set season with number <num> as the active season. Can be a relative 
         offset like +1 or -2.
 
+Selectors:
+    Selectors are used to find series to act upon. In its most basic form, a 
+    selector is simply the name of a series or the beginning of a name of a 
+    series (note that the selector will match any series that start with the 
+    specified name). Within the selector, the options listed below can be given.
+
+    +finished/+completed, +watching, +dropped, +undropped:
+        Put any of these in a separate argument anywhere in the selector and it 
+        will only match series that satisfy the condition.
+
+    =<category>
+        Will only match with the specified category.
+
+    %%exact
+        When specified, only match series that exactly match the full selector.
+
+    %%contains
+        When specified, match all series containing the selector.
+
+    %%suffix
+        When specified, match all series that end with the selector.
+
+    %%prefix
+        Default behaviour: match all series that start with with the selector.
 """
 # }}}
 
@@ -247,8 +275,42 @@ def dbbind():
 
 def getselection(session, selector, list=True):
     """Get all anime matching a selector"""
-    query = session.query(Series).filter(Series.title.startswith(selector))
-    return query.all() if list else query
+    q = session.query(Series)
+    mode = "prefix"
+
+    for opt in selector:
+        if opt == "+finished" or opt == "+completed":
+            q = q.filter(Series.finished == True)
+            selector.remove(opt)
+        elif opt == "+watching":
+            q = q.filter(Series.finished == False)
+            selector.remove(opt)
+        elif opt == "+dropped":
+            q = q.filter(Series.dropped == True)
+            selector.remove(opt)
+        elif opt == "+undropped":
+            q = q.filter(Series.dropped == False)
+            selector.remove(opt)
+        elif opt.startswith("%"):
+            mode = opt[1:]
+            selector.remove(opt)
+        elif opt.startswith("="):
+            q = q.filter(Series.category == opt[1:])
+            selector.remove(opt)
+    
+    if selector:
+        selector = " ".join(selector)
+
+        if mode == "exact":
+            q = q.filter(Series.title.ilike(selector))
+        elif mode == "contains":
+            q = q.filter(Series.title.contains(selector))
+        elif mode == "suffix":
+            q = q.filter(Series.title.endswith(selector))
+        else:
+            q = q.filter(Series.title.startswith(selector))
+
+    return q.all() if list else q
 
 def padstr(string, pad, right=False):
     # Convert to string
@@ -346,7 +408,7 @@ def add(arg, selector):
         return
 
     # Create a new series
-    series = Series(title=selector, current=1)
+    series = Series(title=" ".join(selector), current=1)
     series.ctime = datetime.datetime.now()
     series.mtime = datetime.datetime.now()
 
@@ -833,8 +895,6 @@ def main():
             else:
                 selector.insert(0, x)
                 arg.remove(x)
-
-        selector = " ".join(selector)
 
         # Remove colon
         arg[-1] = arg[-1][:-1]
