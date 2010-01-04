@@ -41,6 +41,14 @@ Commands:
     initdb
         Initialise the database with all the necessary tables.
 
+    list [category]: (selector)
+        List all series in [category] matched by (selector).
+        If no selector is given, match all series in [category].
+        If no category is given, match series in any category.
+
+    log: (selector)
+        Show a detailed log for series matching (selector).
+
     add [category]: (selector)
         Add a new series entry with name specified by (selector).
         Optionally you can enter a category to mark it as.
@@ -86,6 +94,28 @@ Commands:
 CONF_DIR = os.getenv("HOME")+"/.anigrate"
 DB_LOCATION = CONF_DIR+"/db"
 
+COLOR = {
+    "normal": "\033[0m",
+    "unknown": "\033[1;35m",
+    "header": "\033[1;33m",
+
+    "series_watching": "\033[1;34m",
+    "series_dropped": "\033[1;31m",
+
+    "score_top": "\033[1;32m",
+    "score_high": "\033[0;32m",
+    "score_normal": "\033[0;37m",
+    "score_low": "\033[0;31m",
+    "score_critical": "\033[1;31m",
+}
+
+DISPLAY_HEADER = \
+"""\n  %(header)sSeries%(normal)s                                   | %(header)sWatched%(normal)s | %(header)sSeason%(normal)s | %(header)sRating%(normal)s """ % COLOR+\
+"""\n ------------------------------------------|---------|--------|--------"""
+
+DISPLAY_FOOTER = """                                           |         |        |        \n"""
+
+DISPLAY_SERIES = """  %(title)s | %(epscurrent)s/%(epstotal)s | %(current)s | %(rating)s """
 # }}}
 
 # {{{ Models
@@ -105,7 +135,11 @@ class Series(Base):
     dropped = Column(Boolean, default=False)
     category = Column(String(255), default="")
     duration = Column(Integer, default=22)
-    finished = Column(Integer, default=0)
+    finished = Column(Boolean, default=False)
+
+    seasontotal = Column(Integer, default=1)
+    epscurrent = Column(Integer, default=0)
+    epstotal = Column(Integer, default=0)
 
     def getseason(self, session, num=None):
         """Retrieve a season based on its number."""
@@ -118,12 +152,19 @@ class Series(Base):
     def eval_finished(self, session):
         """Evaluate whether the series is finished."""
         self.finished = True
+        self.seasontotal = 0
 
         for season in session.query(Season).filter(
                 Season.series == self.id).all():
             if season.current_watched < season.episode_total \
             or season.episode_total == 0:
                 self.finished = False
+
+            if season.num == self.current:
+                self.epscurrent = season.current_watched
+                self.epstotal = season.episode_total
+
+            self.seasontotal += 1
 
         return self.finished
 
@@ -204,9 +245,78 @@ def dbbind():
 
     return Session()
 
-def getselection(session, selector):
+def getselection(session, selector, list=True):
     """Get all anime matching a selector"""
-    return session.query(Series).filter(Series.title.startswith(selector)).all()
+    query = session.query(Series).filter(Series.title.startswith(selector))
+    return query.all() if list else query
+
+def padstr(string, pad, right=False):
+    # Convert to string
+    string = str(string)
+
+    # Padd
+    while len(string) < pad:
+        if right:
+            string = " "+string
+        else:
+            string = string+" "
+
+    return string
+
+# }}}
+
+# {{{ Display functions
+def dispseries(sel, display=True):
+    """Display a line for a series."""
+    data = {
+        "title": sel.title,
+        "current": padstr(sel.current, 6),
+        "epscurrent": padstr(sel.epscurrent, 3),
+        "epstotal": padstr(sel.epstotal, 3, right=True),
+        "rating": padstr(sel.rating, 6),
+    }
+
+    # Color rating
+    if sel.rating == 0:
+        data['rating'] = COLOR['unknown']+"??    "+COLOR['normal']
+    elif sel.rating <= 4:
+        data['rating'] = COLOR['score_critical']+data['rating']+COLOR['normal']
+    elif sel.rating <= 5:
+        data['rating'] = COLOR['score_low']+data['rating']+COLOR['normal']
+    elif sel.rating >= 10:
+        data['rating'] = COLOR['score_top']+data['rating']+COLOR['normal']
+    elif sel.rating >= 8:
+        data['rating'] = COLOR['score_high']+data['rating']+COLOR['normal']
+
+    # Dropped note
+    if sel.dropped:
+        data['title'] = "(dropped) "+data['title']
+
+    # Truncate series
+    if len(data['title']) > 40:
+        data['title'] = data['title'][:37]+"..."
+
+    data['title'] = padstr(data['title'], 40)
+
+    if sel.epstotal == 0:
+        data['epstotal'] = COLOR['unknown']+" ??"+COLOR['normal']
+
+    # Mark watching/dropped
+    if sel.dropped:
+        data['title'] = COLOR['series_dropped']+data['title']+COLOR['normal']
+        data['current'] = COLOR['series_dropped']+data['current']+COLOR['normal']
+        data['epscurrent'] = COLOR['series_dropped']+data['epscurrent']
+        data['epstotal'] = data['epstotal']+COLOR['normal']
+    elif not sel.finished:
+        data['title'] = COLOR['series_watching']+data['title']+COLOR['normal']
+        data['current'] = COLOR['series_watching']+data['current']+COLOR['normal']
+        data['epscurrent'] = COLOR['series_watching']+data['epscurrent']
+        data['epstotal'] = data['epstotal']+COLOR['normal']
+
+    if display:
+        print(DISPLAY_SERIES % data)
+    else:
+        return DISPLAY_SERIES % data
 
 # }}}
 
@@ -371,6 +481,7 @@ def length(arg, selector):
 
         print("Setting season %d length to %d: %s..."%
                 (season.num, length, sel.title))
+
         sel.eval_finished(session)
 
     session.commit()
@@ -436,7 +547,9 @@ def active(arg, selector):
             continue
 
         print("Activating season %d: %s..." % (sn, sel.title))
+        season = sel.getseason(session, sn)
         sel.current = sn
+        sel.eval_finished()
 
     session.commit()
 # }}}
@@ -579,6 +692,7 @@ def length(arg, selector):
 
         print("Setting season %d length to %d: %s..."%
                 (num, length, sel.title))
+
         sel.eval_finished(session)
 
     session.commit()
@@ -613,6 +727,9 @@ def watch(arg, selector):
     session = dbbind()
     selection = getselection(session, selector)
 
+    # Display header
+    print(DISPLAY_HEADER)
+
     for sel in selection:
         season = sel.getseason(session)
         neww = season.current_watched+num if rel else num
@@ -623,15 +740,13 @@ def watch(arg, selector):
             return "Error: watched amount %d is more than season length %d: %s."\
                      % (neww, season.episode_total, sel.title)
 
-        print("Marking watched until %d: %s..." % (num, sel.title))
-
         if neww < season.current_watched:
             watched = session.query(Watched).filter(
                 Watched.season == season.id
             ).order_by(Watched.finishep.desc()).all()
 
             for inst in watched:
-                if inst.startep > neww:
+                if inst.startep >= neww:
                     session.delete(inst)
                 elif inst.finishep > neww:
                     inst.finishep = neww
@@ -639,7 +754,7 @@ def watch(arg, selector):
         elif neww > season.current_watched:
             watched = Watched()
             watched.season = season.id
-            watched.startep = season.currently_watched
+            watched.startep = season.current_watched
             watched.finishep = neww
             watched.time = datetime.datetime.now()
             session.add(watched)
@@ -653,9 +768,45 @@ def watch(arg, selector):
         and sel.getseason(session, sel.current+1):
             sel.current = sel.current+1
 
+        season = sel.getseason(session)
         sel.eval_finished(session)
+        dispseries(sel)
+
+    # Display footer
+    print(DISPLAY_FOOTER)
 
     session.commit()
+# }}}
+
+# {{{ list
+@command()
+def list(arg, selector):
+    """Display lines matching a selector."""
+    # Bind database
+    session = dbbind()
+
+    # Get selection
+    if selector:
+        selection = getselection(session, selector, list=False)
+    else:
+        selection = session.query(Series)
+
+    # Category
+    if arg:
+        selection = selection.filter(Series.category == arg[0])
+
+    # Sort by completion
+    selection = selection.order_by(
+        Series.dropped.asc(), Series.finished.asc(), Series.mtime.desc())
+
+    # Display header
+    print(DISPLAY_HEADER)
+
+    for sel in selection.all():
+        dispseries(sel)
+
+    # Display footer
+    print(DISPLAY_FOOTER)
 # }}}
 
 # }}}
