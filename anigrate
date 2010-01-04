@@ -8,6 +8,7 @@ from decorator import decorator
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql import and_, or_, not_
 
 # {{{ Help
 """
@@ -138,6 +139,8 @@ COLOR = {
 
     "series_watching": "\033[1;34m",
     "series_dropped": "\033[1;31m",
+    "seasonnum": "\033[1;35m",
+    "epcount": "\033[1;34m",
 
     "score_top": "\033[1;32m",
     "score_high": "\033[0;32m",
@@ -148,11 +151,18 @@ COLOR = {
 
 DISPLAY_HEADER = \
 """\n  %(header)sSeries%(normal)s                                   | %(header)sWatched%(normal)s | %(header)sSeason%(normal)s | %(header)sRating%(normal)s """ % COLOR+\
-"""\n ------------------------------------------|---------|--------|--------"""
+"""\n ------------------------------------------+---------+--------+--------"""
 
 DISPLAY_FOOTER = """                                           |         |        |        \n"""
 
 DISPLAY_SERIES = """  %(title)s | %(epscurrent)s/%(epstotal)s | %(current)s | %(rating)s """
+
+DISPLAY_WATCHED = """  %(title)s season %(season)s to ep %(finishep)s | %(date)s """
+
+DISPLAY_HIST_HEADER = """\n %(header)sHistory%(normal)s\n ---------------------------------------------------+------------------""" % COLOR
+DISPLAY_HIST_FOOTER = """ ---------------------------------------------------+------------------\n"""
+
+DISPLAY_LOG = """  %(title)s season %(season)s to ep %(finishep)s | %(date)s """
 # }}}
 
 # {{{ Models
@@ -224,10 +234,17 @@ class Watched(Base):
     id = Column(Integer, primary_key=True)
 
     season = Column(ForeignKey("seasons.id"))
+    seasonnum = Column(Integer)
+    series = Column(ForeignKey("series.id"))
     time = Column(DateTime)
 
     startep = Column(Integer)
     finishep = Column(Integer)
+
+    def getseries(self, session):
+        return session.query(Series).filter(
+            Series.id == self.series
+        ).first()
 # }}}
 
 # {{{ Utility functions
@@ -392,6 +409,49 @@ def dispseries(sel, display=True):
         print(DISPLAY_SERIES % data)
     else:
         return DISPLAY_SERIES % data
+
+def dispwatched(sel, watched, display=True, template=None):
+    """Display a watched episode string"""
+    data = {
+        "title": sel.title,
+        "season": padstr(watched.seasonnum, 1),
+        "startep": padstr(watched.startep, 2),
+        "finishep": padstr(watched.finishep, 2),
+        "date": watched.time.strftime("%a %d %b, %Y"),
+    }
+
+    # Truncate series
+    if len(data['title']) > 31:
+        data['title'] = data['title'][:28]+"..."
+
+    data['title'] = padstr(data['title'], 31)
+
+    # Color title
+    if sel.rating != 0:
+        if sel.rating <= 4:
+            data['title'] = COLOR['score_critical']+data['title']+COLOR['normal']
+        elif sel.rating <= 5:
+            data['title'] = COLOR['score_low']+data['title']+COLOR['normal']
+        elif sel.rating >= 10:
+            data['title'] = COLOR['score_top']+data['title']+COLOR['normal']
+        elif sel.rating >= 8:
+            data['title'] = COLOR['score_high']+data['title']+COLOR['normal']
+
+    # Color season
+    data['season'] = COLOR['seasonnum']+str(data['season'])+COLOR['normal']
+
+    # Color episode
+    data['startep'] = COLOR['epcount']+str(data['startep'])+COLOR['normal']
+    data['finishep'] = COLOR['epcount']+str(data['finishep'])+COLOR['normal']
+
+    if template is None:
+        template = DISPLAY_WATCHED
+
+    if display:
+        print(template % data)
+    else:
+        return template % data
+
 
 # }}}
 
@@ -875,8 +935,10 @@ def watch(arg, selector):
         elif neww > season.current_watched:
             watched = Watched()
             watched.season = season.id
+            watched.series = sel.id
             watched.startep = season.current_watched
             watched.finishep = neww
+            watched.seasonnum = season.num
             watched.time = datetime.datetime.now()
             session.add(watched)
 
@@ -925,6 +987,46 @@ def list(arg, selector):
 
     # Display footer
     print(DISPLAY_FOOTER)
+# }}}
+
+# {{{ hist
+@command()
+def hist(arg, selector):
+    """Display watched history."""
+    # Bind database
+    session = dbbind()
+
+    # Category
+    if arg:
+        try:
+            num = int(arg[0])
+        except:
+            return "Error: history amount is not a valid number."
+    else:
+        num = 15
+
+
+    # Build query
+    q = session.query(Watched).order_by(Watched.time.desc()).limit(num)
+    av = None
+
+    # Get selection
+    if selector:
+        selection = getselection(session, selector)
+        for sel in selection:
+            criterium = (Watched.series == sel.id)
+            av = or_(av, criterium) if av else criterium
+
+        q = q.filter(av)
+
+    # Display header
+    print(DISPLAY_HIST_HEADER)
+
+    for watch in q.all():
+        dispwatched(watch.getseries(session), watch)
+
+    # Display footer
+    print(DISPLAY_HIST_FOOTER)
 # }}}
 
 # }}}
