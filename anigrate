@@ -136,6 +136,7 @@ COLOR = {
     "normal": "\033[0m",
     "unknown": "\033[1;35m",
     "header": "\033[1;33m",
+    "line": "\033[1;30m",
 
     "series_watching": "\033[1;34m",
     "series_dropped": "\033[1;31m",
@@ -159,10 +160,12 @@ DISPLAY_SERIES = """  %(title)s | %(epscurrent)s/%(epstotal)s | %(current)s | %(
 
 DISPLAY_WATCHED = """  %(title)s season %(season)s to ep %(finishep)s | %(date)s """
 
-DISPLAY_HIST_HEADER = """\n %(header)sHistory%(normal)s\n ---------------------------------------------------+------------------""" % COLOR
+DISPLAY_HIST_HEADER = """\n  %(header)sHistory%(normal)s\n ---------------------------------------------------+------------------""" % COLOR
 DISPLAY_HIST_FOOTER = """ ---------------------------------------------------+------------------\n"""
 
-DISPLAY_LOG = """  %(title)s season %(season)s to ep %(finishep)s | %(date)s """
+DISPLAY_LOG_HEADER = """%(line)s ..........................................+.........+........+........%(normal)s""" % COLOR
+DISPLAY_LOG = """  season %(season)s to ep %(finishep)s                        . %(date)s """
+DISPLAY_LOG_FOOTER = """%(line)s ..........................................+.........+........+........%(normal)s""" % COLOR
 # }}}
 
 # {{{ Models
@@ -379,6 +382,8 @@ def dispseries(sel, display=True):
         data['rating'] = COLOR['score_top']+data['rating']+COLOR['normal']
     elif sel.rating >= 8:
         data['rating'] = COLOR['score_high']+data['rating']+COLOR['normal']
+    else:
+        data['rating'] = COLOR['score_normal']+data['rating']+COLOR['normal']
 
     # Dropped note
     if sel.dropped:
@@ -436,6 +441,8 @@ def dispwatched(sel, watched, display=True, template=None):
             data['title'] = COLOR['score_top']+data['title']+COLOR['normal']
         elif sel.rating >= 8:
             data['title'] = COLOR['score_high']+data['title']+COLOR['normal']
+        else:
+            data['title'] = COLOR['score_normal']+data['title']+COLOR['normal']
 
     # Color season
     data['season'] = COLOR['seasonnum']+str(data['season'])+COLOR['normal']
@@ -953,7 +960,25 @@ def watch(arg, selector):
 
         season = sel.getseason(session)
         sel.eval_finished(session)
+
+        # Display series
         dispseries(sel)
+
+        # Display log
+        watched = session.query(Watched).filter(
+            Watched.series == sel.id
+        ).order_by(Watched.time.desc()).all() 
+
+        if watched:
+            # Display header
+            print(DISPLAY_LOG_HEADER)
+
+            for watch in watched:
+                dispwatched(sel, watch, template=DISPLAY_LOG)
+
+            # Display footer
+            print(DISPLAY_LOG_FOOTER)
+
 
     # Display footer
     print(DISPLAY_FOOTER)
@@ -970,10 +995,6 @@ def list(arg, selector):
 
     # Get selection
     selection = getselection(session, selector, list=False)
-
-    # Category
-    if arg:
-        selection = selection.filter(Series.category == arg[0])
 
     # Sort by completion
     selection = selection.order_by(
@@ -1027,6 +1048,43 @@ def hist(arg, selector):
 
     # Display footer
     print(DISPLAY_HIST_FOOTER)
+# }}}
+
+# {{{ log
+@command()
+def log(arg, selector):
+    """Display lines matching a selector."""
+    # Bind database
+    session = dbbind()
+
+    # Get selection
+    selection = getselection(session, selector, list=False)
+
+    # Sort by completion
+    selection = selection.order_by(
+        Series.dropped.asc(), Series.finished.asc(), Series.mtime.desc())
+
+    # Display header
+    print(DISPLAY_HEADER)
+
+    for sel in selection.all():
+        dispseries(sel)
+        watched = session.query(Watched).filter(
+            Watched.series == sel.id
+        ).order_by(Watched.time.desc()).all() 
+
+        if watched:
+            # Display header
+            print(DISPLAY_LOG_HEADER)
+
+            for watch in watched:
+                dispwatched(sel, watch, template=DISPLAY_LOG)
+
+            # Display footer
+            print(DISPLAY_LOG_FOOTER)
+
+    # Display footer
+    print(DISPLAY_FOOTER)
 # }}}
 
 # }}}
