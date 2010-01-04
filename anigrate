@@ -83,6 +83,9 @@ Commands:
         Set season with number <num> as the active season. Can be a relative 
         offset like +1 or -2.
 
+    help
+        Show this help message
+
 Selectors:
     Selectors are used to find series to act upon. In its most basic form, a 
     selector is simply the name of a series or the beginning of a name of a 
@@ -107,6 +110,49 @@ Selectors:
 
     %%prefix
         Default behaviour: match all series that start with with the selector.
+
+    @rating, @activity, @watched
+        Set field to sort by, you can sort by series rating, series latest 
+        activity and amount of episodes watched respectively. When no sort
+        specifier is given, it sorts by latest activity.
+
+
+Examples
+    Here are some example use cases, note that every selector specifier or 
+    command can be shortened to its smallest non-ambiguous prefix.
+
+    anigrate list
+        List all series in the database.
+
+    anigrate li: =anime
+        List all series with category "anime".
+
+    anigrate li: +w
+        List only series currently being watched.
+
+    anigrate list: +c @r
+        List all completed series sorted by the rating given.
+
+    anigrate add anime: Mushishi
+        Add a new series in category "anime" with name "Mushishi".
+
+    anigrate watch: Mushishi
+        Increment the watched count on the "Mushishi" series by one.
+
+    anigrate w +3: Mus
+        Increment the watched count by three on series prefixed by "Mus".
+        ie. This command would match "Mus[shishi]" and thus increment
+        that by three.
+
+    anigrate season add: Mushishi
+        Add a new season to series "Mushishi".
+
+    anigrate s act 1: Mushishi
+        Set season "1" as the active season on series "Mushishi".
+
+    anigrate length 26: Mushishi
+        Set the currently active season on series "Mushishi" as being
+        26 episodes long.
 """
 # }}}
 
@@ -121,6 +167,7 @@ COLOR = {
     "header": "\033[1;33m",
     "line": "\033[1;30m",
 
+    "series_normal": "\033[1;36m",
     "series_watching": "\033[1;34m",
     "series_dropped": "\033[1;31m",
     "seasonnum": "\033[1;35m",
@@ -159,21 +206,20 @@ class Series(Base):
     """An entire series."""
     __tablename__ = "series"
     id = Column(Integer, primary_key=True)
-    rating = Column(Integer, default=0)
     title = Column(String(255))
-
+    rating = Column(Integer, default=0)
     current = Column(Integer)
     ctime = Column(DateTime)
     mtime = Column(DateTime)
     dropped = Column(Boolean, default=False)
     category = Column(String(255), default="")
     duration = Column(Integer, default=23)
-    finished = Column(Boolean, default=False)
 
     seasontotal = Column(Integer, default=1)
     epscurrent = Column(Integer, default=0)
     epstotal = Column(Integer, default=0)
     epsall = Column(Integer, default=0)
+    finished = Column(Boolean, default=False)
 
     def getseason(self, session, num=None):
         """Retrieve a season based on its number."""
@@ -302,14 +348,16 @@ def getselection(session, selector, list=True):
     """Get all anime matching a selector"""
     q = session.query(Series)
     mode = "prefix"
+    sort = False
 
-    for opt in selector:
+    for opt in selector[:]:
         if opt.startswith("+"):
             if "+finished".startswith(opt) or "+completed".startswith(opt):
                 q = q.filter(Series.finished == True)
                 selector.remove(opt)
             elif "+watching".startswith(opt):
                 q = q.filter(Series.finished == False)
+                q = q.filter(Series.dropped == False)
                 selector.remove(opt)
             elif "+dropped".startswith(opt):
                 q = q.filter(Series.dropped == True)
@@ -323,7 +371,24 @@ def getselection(session, selector, list=True):
         elif opt.startswith("="):
             q = q.filter(Series.category == opt[1:])
             selector.remove(opt)
-    
+        elif opt.startswith("@"):
+            if "@rating".startswith(opt):
+                selector.remove(opt)
+                sort = True
+                q = q.order_by(Series.rating.desc())
+            elif "@activity".startswith(opt):
+                selector.remove(opt)
+                sort = True
+                q = q.order_by(Series.mtime.desc())
+            elif "@watched".startswith(opt):
+                selector.remove(opt)
+                sort = True
+                q = q.order_by(Series.epscurrent.desc())
+
+    # Default sort order
+    if not sort:
+        q = q.order_by(Series.dropped.asc(), Series.finished.asc(), Series.mtime.desc())
+
     if selector:
         selector = " ".join(selector)
 
@@ -401,6 +466,11 @@ def dispseries(sel, display=True):
         data['title'] = COLOR['series_watching']+data['title']+COLOR['normal']
         data['current'] = COLOR['series_watching']+data['current']+COLOR['normal']
         data['epscurrent'] = COLOR['series_watching']+data['epscurrent']
+        data['epstotal'] = data['epstotal']+COLOR['normal']
+    else:
+        data['title'] = COLOR['series_normal']+data['title']+COLOR['normal']
+        data['current'] = COLOR['series_normal']+data['current']+COLOR['normal']
+        data['epscurrent'] = COLOR['series_normal']+data['epscurrent']
         data['epstotal'] = data['epstotal']+COLOR['normal']
 
     if display:
@@ -989,10 +1059,6 @@ def list(arg, selector):
     # Get selection
     selection = getselection(session, selector, list=False)
 
-    # Sort by completion
-    selection = selection.order_by(
-        Series.dropped.asc(), Series.finished.asc(), Series.mtime.desc())
-
     # Display header
     print(DISPLAY_HEADER)
 
@@ -1052,10 +1118,6 @@ def log(arg, selector):
 
     # Get selection
     selection = getselection(session, selector, list=False)
-
-    # Sort by completion
-    selection = selection.order_by(
-        Series.dropped.asc(), Series.finished.asc(), Series.mtime.desc())
 
     # Display header
     print(DISPLAY_HEADER)
