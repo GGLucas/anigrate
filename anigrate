@@ -105,6 +105,7 @@ class Series(Base):
     dropped = Column(Boolean, default=False)
     category = Column(String(255), default="")
     duration = Column(Integer, default=22)
+    finished = Column(Integer, default=0)
 
     def getseason(self, session, num=None):
         """Retrieve a season based on its number."""
@@ -113,6 +114,18 @@ class Series(Base):
         ).filter(
             Season.num == (self.current if num==None else num)
         ).first()
+
+    def eval_finished(self, session):
+        """Evaluate whether the series is finished."""
+        self.finished = True
+
+        for season in session.query(Season).filter(
+                Season.series == self.id).all():
+            if season.current_watched < season.episode_total \
+            or season.episode_total == 0:
+                self.finished = False
+
+        return self.finished
 
 class Season(Base):
     """One season of a series."""
@@ -130,6 +143,7 @@ class Watched(Base):
     id = Column(Integer, primary_key=True)
 
     season = Column(ForeignKey("seasons.id"))
+    time = Column(DateTime)
 
     startep = Column(Integer)
     finishep = Column(Integer)
@@ -357,6 +371,7 @@ def length(arg, selector):
 
         print("Setting season %d length to %d: %s..."%
                 (season.num, length, sel.title))
+        sel.eval_finished(session)
 
     session.commit()
 # }}}
@@ -469,6 +484,7 @@ def add(arg, selector):
 
         print("Adding season %d: %s..." % (sn, sel.title))
         session.add(season)
+        sel.eval_finished(session)
 
     session.commit()
 # }}}
@@ -527,6 +543,8 @@ def remove(arg, selector):
                 sn -= 1
             sel.current = sn
 
+        sel.eval_finished(session)
+
 
     session.commit()
 # }}}
@@ -561,10 +579,83 @@ def length(arg, selector):
 
         print("Setting season %d length to %d: %s..."%
                 (num, length, sel.title))
+        sel.eval_finished(session)
 
     session.commit()
 # }}}
 
+# }}}
+
+# {{{ watch
+@command()
+def watch(arg, selector):
+    """Set the watched count for the currently active season."""
+    if not selector:
+        return "Error: selector required."
+
+    if arg:
+        try:
+            rel = arg[0][0] in ('+', '-')
+            num = int(arg[0])
+        except:
+            return "Error: watched amount is not a valid number."
+    else:
+        rel = True
+        num = 1
+
+    # Filter out silly numbers
+    if rel and num == 0:
+        return "Error: invalid watched amount: 0."
+    elif not rel and num < 0:
+        return "Error: invalid watched amount: %d." % num
+
+    # Bind database
+    session = dbbind()
+    selection = getselection(session, selector)
+
+    for sel in selection:
+        season = sel.getseason(session)
+        neww = season.current_watched+num if rel else num
+
+        if neww < 0:
+            return "Error: invalid watched amount %d: %s." % (neww, sel.title)
+        if season.episode_total > 0 and neww > season.episode_total:
+            return "Error: watched amount %d is more than season length %d: %s."\
+                     % (neww, season.episode_total, sel.title)
+
+        print("Marking watched until %d: %s..." % (num, sel.title))
+
+        if neww < season.current_watched:
+            watched = session.query(Watched).filter(
+                Watched.season == season.id
+            ).order_by(Watched.finishep.desc()).all()
+
+            for inst in watched:
+                if inst.startep > neww:
+                    session.delete(inst)
+                elif inst.finishep > neww:
+                    inst.finishep = neww
+                    break
+        elif neww > season.current_watched:
+            watched = Watched()
+            watched.season = season.id
+            watched.startep = season.currently_watched
+            watched.finishep = neww
+            watched.time = datetime.datetime.now()
+            session.add(watched)
+
+        sel.mtime = datetime.datetime.now()
+        season.current_watched = neww
+
+        # Check if season is finished
+        if season.current_watched == season.episode_total \
+        and season.episode_total != 0 \
+        and sel.getseason(session, sel.current+1):
+            sel.current = sel.current+1
+
+        sel.eval_finished(session)
+
+    session.commit()
 # }}}
 
 # }}}
