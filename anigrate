@@ -354,6 +354,7 @@ def getselection(session, selector, list=True):
         if opt.startswith("+"):
             if "+finished".startswith(opt) or "+completed".startswith(opt):
                 q = q.filter(Series.finished == True)
+                q = q.filter(Series.dropped == False)
                 selector.remove(opt)
             elif "+watching".startswith(opt):
                 q = q.filter(Series.finished == False)
