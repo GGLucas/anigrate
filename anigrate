@@ -1118,12 +1118,12 @@ def log(arg, selector):
     session = dbbind()
 
     # Get selection
-    selection = getselection(session, selector, list=False)
+    selection = getselection(session, selector)
 
     # Display header
     print(DISPLAY_HEADER)
 
-    for sel in selection.all():
+    for sel in selection:
         dispseries(sel)
         watched = session.query(Watched).filter(
             Watched.series == sel.id
