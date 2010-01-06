@@ -35,9 +35,16 @@ Commands:
         [selector]. Num defaults to 15, matches all series if no selector
         is specified.
 
-    add [category]: (name)
+    add [category] [watched[/total][*seasons]] [rating] [duration]: (name)
         Add a new series entry with name specified by (name).
-        Optionally you can enter a category to mark it as.
+        Optionally, you can specify the category, duration, amount of episodes
+        watched, amount of episodes total, amount of seasons and rating.
+
+        Note that if you specify to create multiple seasons, every season will
+        have the same watched and total amounts you specified here.
+
+    category [category]: (selector)
+        Mark all series matched by (selector) as having category [category].
 
     remove: (selector)
         Completely remove any series that match (selector).
@@ -53,7 +60,7 @@ Commands:
 
     duration <time>: (selector)
         Set the average duration of an episode in series matching (selector).
-        This is used to calculate total watching time, defaults to 23 minutes
+        This is used to calculate total watching time, defaults to 24 minutes
         per episode for every series.
 
     time: [selector]
@@ -67,9 +74,12 @@ Commands:
         number will watch up to that episode or remove everything from that
         episode on. Watch always uses the currently active season.
 
-    season add [num]: (selector)
+    season add [num] [watched[/total]]: (selector)
         Add a new season, if num is specified the season number is set to that, 
         otherwise it will default to one more than the previous season.
+
+        Optionally, you can specify the watched/total episode amounts to be set 
+        for this season.
 
     season remove [num]: (selector)
         Remove the season with number [num] from a series. If num is not
@@ -395,7 +405,7 @@ class Series(Base):
     mtime = Column(DateTime)
     dropped = Column(Boolean, default=False)
     category = Column(String(255), default="")
-    duration = Column(Integer, default=23)
+    duration = Column(Integer, default=24)
 
     seasontotal = Column(Integer, default=1)
     epscurrent = Column(Integer, default=0)
@@ -614,7 +624,7 @@ def gettime(selection):
     for sel in selection:
         total += sel.epsall*sel.duration
 
-    totaldays = total/1440
+    totaldays = total/float(1440)
     return (total, totaldays)
 
 def padstr(string, pad, right=False):
@@ -890,20 +900,83 @@ def add(arg, selector):
     series.ctime = datetime.datetime.now()
     series.mtime = datetime.datetime.now()
 
+    print("Adding: %s..." % series.title)
+
+    ## Category
+    if len(arg) > 0:
+        series.category = arg[0]
+
+    if len(arg) > 2:
+        try:
+            series.rating = int(arg[2])
+        except:
+            return "Error: rating is not a valid number."
+
+    if len(arg) > 3:
+        try:
+            series.duration = int(arg[3])
+        except:
+            return "Error: duration is not a valid number."
+
     session.add(series)
     session.commit()
 
-    ## Category
-    if arg:
-        series.category = arg[0]
+    ## Parse episodes
+    if len(arg) > 1:
+        watched = arg[1]
+        total = 0
+        seasons = 1
 
-    ## First season
-    season = Season(num=1)
-    season.series = series.id
+        if "*" in watched:
+            try:
+                watched, seasons = watched.split("*")
+            except:
+                return "Error: episodes in invalid format."
 
-    print("Adding: %s..." % series.title)
-    session.add(season)
-    session.commit()
+        if "/" in watched:
+            try:
+                watched, total = watched.split("/")
+            except:
+                return "Error: episodes in invalid format."
+
+        try:
+            watched = int(watched)
+            total = int(total)
+            seasons = int(seasons)
+        except:
+            return "Error: episodes in invalid format."
+
+        if total == 0 and seasons > 1:
+            total = watched
+
+        for i in range(seasons):
+            season = Season()
+            season.num = i+1
+            season.series = series.id
+            season.episode_total = watched
+            season.current_watched = total
+            session.add(season)
+
+            if watched > 0:
+                session.commit()
+                w = Watched()
+                w.series = series.id
+                w.season = season.id
+                w.time = datetime.datetime.now()
+                w.startep = 0
+                w.finishep = watched
+                w.seasonnum = season.num
+                session.add(w)
+
+        series.current = seasons
+        series.eval_finished(session)
+        session.commit()
+    else:
+        ## First season
+        season = Season(num=1)
+        season.series = series.id
+        session.add(season)
+        session.commit()
 # }}}
 
 # {{{ remove
@@ -954,6 +1027,27 @@ def rate(arg, selector):
     for sel in selection:
         print("Rating %d: %s..." %(score, sel.title))
         sel.rating = score
+
+    session.commit()
+# }}}
+
+# {{{ category
+@command()
+def category(arg, selector):
+    """Set the category for a series."""
+    if not selector:
+        return "Error: selector required."
+
+    if not arg:
+        return "Error: category required."
+
+    # Bind database
+    session = dbbind()
+    selection = getselection(session, selector)
+
+    for sel in selection:
+        print("Category %s: %s..." %(arg[0], sel.title))
+        sel.category = arg[0]
 
     session.commit()
 # }}}
@@ -1062,9 +1156,10 @@ def time(arg, selector):
     # Bind database
     session = dbbind()
     selection = getselection(session, selector)
+    time = gettime(selection)
 
     print("Total time spent watching:")
-    print("%.1f days = %d minutes" % gettime(selection))
+    print("%.1f days = %d minutes" % (time[1], time[0]))
 # }}}
 
 # {{{ season
@@ -1129,7 +1224,7 @@ def active(arg, selector):
         print("Activating season %d: %s..." % (sn, sel.title))
         season = sel.getseason(session, sn)
         sel.current = sn
-        sel.eval_finished()
+        sel.eval_finished(session)
 
     session.commit()
 # }}}
@@ -1154,6 +1249,23 @@ def add(arg, selector):
     else:
         num = None
 
+    ## Parse episodes
+    watched = 0
+    total = 0
+
+    if len(arg) > 1:
+        if "/" in arg[1]:
+            try:
+                watched, total = map(int, arg[1].split("/"))
+            except:
+                return "Error: episodes in invalid format, ignoring."
+        else:
+            try:
+                watched = int(arg[1])
+            except:
+                return "Error: episodes in invalid format, ignoring."
+
+    ## Error on selector
     if not selection:
         return "Error: no series match selector."
 
@@ -1173,10 +1285,24 @@ def add(arg, selector):
         season = Season()
         season.series = sel.id
         season.num = sn
+        season.current_watched = watched
+        season.episode_total = total
         sel.current = season.num
 
         print("Adding season %d: %s..." % (sn, sel.title))
         session.add(season)
+
+        if watched:
+            session.commit()
+            w = Watched()
+            w.series = sel.id
+            w.season = season.id
+            w.time = datetime.datetime.now()
+            w.seasonnum = season.num
+            w.startep = 0
+            w.finishep = watched
+            session.add(w)
+
         sel.eval_finished(session)
 
     session.commit()
@@ -1343,14 +1469,6 @@ def watch(arg, selector):
 
         sel.mtime = datetime.datetime.now()
         season.current_watched = neww
-
-        # Check if season is finished
-        if season.current_watched == season.episode_total \
-        and season.episode_total != 0 \
-        and sel.getseason(session, sel.current+1):
-            sel.current = sel.current+1
-
-        season = sel.getseason(session)
         sel.eval_finished(session)
 
         # Display series

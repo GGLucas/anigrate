@@ -20,4 +20,4 @@ default=http://en.wikipedia.org/wiki/Special:Search?search=%s
 ## If category=anime, open myanimelist
 anime=http://myanimelist.net/anime.php?q=%s
 ## If category=tv, open tv.com
-tv=http://www.tv.com/search.php?qs=
+tv=http://www.tv.com/search.php?qs=%s
