@@ -953,8 +953,8 @@ def add(arg, selector):
             season = Season()
             season.num = i+1
             season.series = series.id
-            season.episode_total = watched
-            season.current_watched = total
+            season.episode_total = total
+            season.current_watched = watched
             session.add(season)
 
             if watched > 0:
