@@ -325,9 +325,13 @@ PAGE_HTML = """
         #series li {
             display: block;
             list-style: none;
-            padding: .5em;
             margin: 0;
             position: relative;
+        }
+
+        #series li a:first-child {
+            padding: .5em;
+            display: block;
         }
 
         #series li a:last-child {
@@ -335,10 +339,11 @@ PAGE_HTML = """
             position: absolute;
             font-size: 0.7em;
             font-weight: bold;
+            padding-left: 0.5em;
+            padding-bottom: 0.4em;
 
-            padding: .6em;
-            top: .4em;
-            right: 0;
+            top: 0.9em;
+            right: .6em;
         }
 
         #series li:hover a:last-child {
@@ -354,6 +359,24 @@ PAGE_HTML = """
             text-decoration: underline;
         }
 
+        @media screen and (-webkit-min-device-pixel-ratio:0) {
+            /** Webkit does _not_ like position:relative inside
+                a css3 column list. **/
+
+            #series li {
+                position: static;
+            }
+
+            #series li a:last-child {
+                position: static;
+                float: right;
+                margin-top: -2.3em;
+                margin-right: .6em;
+                top: none;
+                right: none;
+            }
+        }
+
         #series li.f_0 { font-weight: bold; }
         #series li.d_1 a { color: #cc3030; }
 
@@ -367,6 +390,7 @@ PAGE_HTML = """
         #series li.r_3, #series li.r_3 a:last-child { background: #ffcc80; }
         #series li.r_2, #series li.r_2 a:last-child { background: #ffb380; }
         #series li.r_1, #series li.r_1 a:last-child { background: #ff9980; }
+        #series li.r_0, #series li.r_0 a:last-child { background: #ffffff; }
     </style>
   </head>
   <body>
@@ -999,7 +1023,7 @@ def application(environ, start_response):
             "series": "",
             "seriestime": 1.56,
             "selector": " ".join(selector) if selector else "All Series",
-            "title": Config.get("weblist","title_list") if Config.has_option("weblist","title_list") else DEFAULT_TITLE_LOG,
+            "title": Config.get("weblist","title_list") if Config.has_option("weblist","title_list") else DEFAULT_TITLE_LIST,
             "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
         }
 
