@@ -76,7 +76,7 @@ Commands:
         number will watch up to that episode or remove everything from that
         episode on. Watch always uses the currently active season.
 
-    season add [num] [watched[/total]]: (selector)
+    season add [watched[/total]] [num]: (selector)
         Add a new season, if num is specified the season number is set to that, 
         otherwise it will default to one more than the previous season.
 
@@ -1431,30 +1431,30 @@ def add(arg, selector):
     session = dbbind()
     selection = getselection(session, selector)
 
-    # Get number
-    if arg:
-        try:
-            num = int(arg[0])
-        except:
-            return "Error: season number is not a valid number."
-    else:
-        num = None
-
     ## Parse episodes
     watched = 0
     total = 0
 
-    if len(arg) > 1:
-        if "/" in arg[1]:
+    if arg:
+        if "/" in arg[0]:
             try:
-                watched, total = map(int, arg[1].split("/"))
+                watched, total = map(int, arg[0].split("/"))
             except:
                 return "Error: episodes in invalid format, ignoring."
         else:
             try:
-                watched = int(arg[1])
+                watched = int(arg[0])
             except:
                 return "Error: episodes in invalid format, ignoring."
+
+    # Get number
+    if len(arg) > 1:
+        try:
+            num = int(arg[1])
+        except:
+            return "Error: season number is not a valid number."
+    else:
+        num = None
 
     ## Error on selector
     if not selection:
