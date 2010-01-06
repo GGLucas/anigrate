@@ -2,6 +2,7 @@
 import sys
 import os
 import datetime
+import time
 
 from ConfigParser import ConfigParser
 
@@ -203,6 +204,12 @@ PAGE_HTML = """
             text-align: center;
         }
 
+        #gentime {
+            font-size: 0.6em;
+            padding-top: 1em;
+            text-align: center;
+        }
+
         #quicklinks {
             margin: 1em auto 0;
             border: 1px solid #cccccc;
@@ -333,6 +340,8 @@ PAGE_HTML = """
         %(series)s
       </ul>
     </div>
+
+    <div id="gentime">page generated in {{GENTIME}}s</div>
   </body>
 </html>
 """
@@ -760,8 +769,23 @@ except:
 
 # WSGI Application
 def application(environ, start_response):
-    # Build selector from uri
-    uri = environ.get("PATH_INFO", "").lstrip("/")
+    # Save time
+    start_time = time.time()
+
+    if environ.has_key("SCRIPT_NAME") and environ.get("SCRIPT_NAME"):
+        # Use request URI
+        uri = environ.get("REQUEST_URI", "")
+
+        # Strip script name
+        uri = uri.lstrip(environ.get("SCRIPT_NAME", ""))
+
+        # Strip query args
+        uri = uri.split("?")[0]
+    else:
+        # Use PATH_INFO
+        uri = environ.get("PATH_INFO")
+
+    # Split into selector arguments
     selector = uri.split("/")
 
     # Connect to db
@@ -780,7 +804,7 @@ def application(environ, start_response):
         "seriestime": 1.56,
         "selector": " ".join(selector) if selector else "All Series",
         "title": Config.get("weblist","title") if Config.has_option("weblist","title") else DEFAULT_TITLE,
-        "uri": environ.get("SCRIPT_NAME", "/"),
+        "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
     }
 
     # Category uri
@@ -829,7 +853,10 @@ def application(environ, start_response):
 
     # Send response
     start_response('200 OK', [('Content-Type', 'text/html')])
-    return PAGE_HTML % data
+    data = PAGE_HTML % data
+
+    # Calculate generation time
+    return data.replace("{{GENTIME}}", str(round(time.time()-start_time, 3)), 1)
 
 @command()
 def runserver(arg, selector):
@@ -1151,8 +1178,8 @@ def duration(arg, selector):
 # }}}
 
 # {{{ time
-@command()
-def time(arg, selector):
+@command(name="time")
+def totaltime(arg, selector):
     """Set the duration per episode for a series."""
     # Bind database
     session = dbbind()
