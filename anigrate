@@ -5,6 +5,7 @@ import datetime
 import time
 
 from ConfigParser import ConfigParser
+from urllib2 import quote, unquote
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, create_engine
 from sqlalchemy.orm import sessionmaker, relation
@@ -239,9 +240,13 @@ PAGE_HTML = """
         }
 
         #quicklinks > div {
+            display: table-row;
+        }
+
+        #quicklinks > div > div {
             padding: 1em;
             min-width: 8em;
-            float: left;
+            display: table-cell;
         }
 
         #quicklinks h3 {
@@ -263,14 +268,14 @@ PAGE_HTML = """
             margin: 0;
         }
 
-        #series li span {
+        #series li a:last-child {
             display: none;
             float: right;
             font-size: 0.7em;
             font-weight: bold;
         }
 
-        #series li:hover span {
+        #series li:hover a:last-child {
             display: block;
         }
 
@@ -307,31 +312,33 @@ PAGE_HTML = """
 
     <div id='quicklinks'>
         <div>
-            <h3>Category:</h3>
-            <ul>
-                <li><a href="%(uri)s">all categories</a></li>
-                %(categories)s
-            </ul>
-        </div>
+            <div>
+                <h3>Category:</h3>
+                <ul>
+                    <li><a href="%(uri)s/=all">all categories</a></li>
+                    %(categories)s
+                </ul>
+            </div>
 
-        <div>
-            <h3>Display:</h3>
-            <ul>
-                <li><a href="%(cat_uri)s/@title">everything</a></li>
-                <li><a href="%(cat_uri)s/+watching">watching</a></li>
-                <li><a href="%(cat_uri)s/+finished/@rating">finished</a></li>
-                <li><a href="%(cat_uri)s/+dropped">dropped</a></li>
-            </ul>
-        </div>
+            <div>
+                <h3>Display:</h3>
+                <ul>
+                    <li><a href="%(cat_uri)s/@title">everything</a></li>
+                    <li><a href="%(cat_uri)s/+watching">watching</a></li>
+                    <li><a href="%(cat_uri)s/+finished/@rating">finished</a></li>
+                    <li><a href="%(cat_uri)s/+dropped">dropped</a></li>
+                </ul>
+            </div>
 
-        <div>
-            <h3>Sort:</h3>
-            <ul>
-                <li><a href="%(nosort_uri)s/@title">title</a></li>
-                <li><a href="%(nosort_uri)s/@rating">rating</a></li>
-                <li><a href="%(nosort_uri)s/@activity">activity</a></li>
-                <li><a href="%(nosort_uri)s/@split">split</a></li>
-            </ul>
+            <div>
+                <h3>Sort:</h3>
+                <ul>
+                    <li><a href="%(nosort_uri)s/@title">title</a></li>
+                    <li><a href="%(nosort_uri)s/@rating">rating</a></li>
+                    <li><a href="%(nosort_uri)s/@activity">activity</a></li>
+                    <li><a href="%(nosort_uri)s/@split">split</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -346,9 +353,109 @@ PAGE_HTML = """
 </html>
 """
 
-SERIES_HTML = """<li class="r_%(rate)d d_%(dropped)d f_%(finished)d"><a href="%(link)s">%(title)s</a><span>S%(season)d %(watched)s/%(total)s</span></li>\n"""
+SERIES_HTML = """<li class="r_%(rate)d d_%(dropped)d f_%(finished)d"><a href="%(link)s">%(title)s</a><a href="%(loglink)s">S%(season)d %(watched)s/%(total)s</a></li>"""
 
 CATEGORY_HTML = """<li><a href="%(link)s">%(title)s</a></li>"""
+
+LOG_PAGE_HTML = """
+<!DOCTYPE html>
+
+<html lang='en-GB'>
+  <head>
+  <title>%(title)s: %(series_title)s</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <style type='text/css'>
+        body {
+            font-family: sans-serif; 
+            background: white;
+            color: black;
+        }
+
+        #header > h1, #header > h2 {
+            margin: 0;
+            text-align: center;
+        }
+
+        #info {
+            margin: 1em auto 0;
+            border: 1px solid #cccccc;
+            background: #f7f7f7;
+            display: table;
+            font-size: 0.8em;
+            min-width: 20em;
+        }
+
+        #info ul {
+            margin: 0;
+            padding: .5em;
+        }
+
+        #info li {
+            margin: 0;
+            list-style: none;
+            display: table-row;
+        }
+
+        #info li span {
+            display: table-cell;
+        }
+
+        #info li span:first-child {
+            min-width: 10em;
+            font-weight: bold;
+        }
+
+        #log table {
+            margin: 1em;
+            padding: 0;
+            width: 100%%;
+        }
+
+        #log tr {
+            list-style: none;
+            width: 100%%;
+        }
+
+        #log td {
+            padding: .3em;
+        }
+
+        #log tr:nth-child(odd) {
+            background: #e7e7e7;
+        }
+
+        #log tr:nth-child(even) {
+            background: #f7f7f7;
+        }
+
+    </style>
+  </head>
+  <body>
+    <div id="header">
+      <h1>%(title)s</h1>
+      <h2>%(series_title)s</h2>
+    </div>
+
+    <div id="info" class="dropped_%(dropped)d finished_%(finished)d">
+        <ul>
+            <li><span>Latest</span> <span>S%(current)d %(watched)d/%(total)d</span></li>
+            <li><span>Seasons</span> <span>%(seasons)d</span></li>
+            <li><span>Duration</span> <span>%(duration)d minutes/ep</span></li>
+            <li><span>Rating</span> <span>%(rating)d</span></li>
+        </ul>
+    </div>
+
+    <div id="log">
+        <table>
+            %(log)s
+        </table>
+    </div>
+  </body>
+</html>
+"""
+
+LOG_HTML = """<tr><td>season <strong>%(season)s</strong> to ep <strong>%(episode)s</strong></td> <td>%(date)s</td></tr>"""
 
 # }}}
 
@@ -359,7 +466,8 @@ CONF_DIR = os.getenv("HOME")+"/.anigrate"
 DB_LOCATION = CONF_DIR+"/db"
 CONF_LOCATION = CONF_DIR+"/config"
 
-DEFAULT_TITLE = "Watch List"
+DEFAULT_TITLE_LIST = "Watch List"
+DEFAULT_TITLE_LOG = "Watch Log"
 DEFAULT_LINK = "http://en.wikipedia.org/wiki/Special:Search?search=%s"
 
 COLOR = {
@@ -585,7 +693,8 @@ def getselection(session, selector, list=True):
             mode = opt[1:]
             selector.remove(opt)
         elif opt.startswith("="):
-            q = q.filter(Series.category == opt[1:])
+            if opt[1:] != "all":
+                q = q.filter(Series.category == opt[1:])
             selector.remove(opt)
         elif opt.startswith("@"):
             if "@rating".startswith(opt):
@@ -774,7 +883,7 @@ def application(environ, start_response):
 
     if environ.has_key("SCRIPT_NAME") and environ.get("SCRIPT_NAME"):
         # Use request URI
-        uri = environ.get("REQUEST_URI", "")
+        uri = unquote(environ.get("REQUEST_URI", "")).lstrip("/")
 
         # Strip script name
         uri = uri.lstrip(environ.get("SCRIPT_NAME", ""))
@@ -783,79 +892,129 @@ def application(environ, start_response):
         uri = uri.split("?")[0]
     else:
         # Use PATH_INFO
-        uri = environ.get("PATH_INFO")
-
-    # Split into selector arguments
-    selector = uri.split("/")
+        uri = environ.get("PATH_INFO").lstrip("/")
 
     # Connect to db
     session = dbbind()
 
-    ## Handle empty selectors
-    if not selector or selector == ['']:
-        selector = []
+    # Check for page to display
+    if uri.startswith("log/"):
+        # Remove log argument
+        selector = [uri.lstrip("log/")]
 
-    if not selector and Config.has_option("weblist", "default"):
-        selector = Config.get("weblist", "default").split()
+        # Match exact by default
+        if not [x for x in selector if x.startswith("%")]:
+            selector.append("%e")
 
-    # Page data dictionary
-    data = {
-        "series": "",
-        "seriestime": 1.56,
-        "selector": " ".join(selector) if selector else "All Series",
-        "title": Config.get("weblist","title") if Config.has_option("weblist","title") else DEFAULT_TITLE,
-        "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
-    }
+        # Get selection
+        selection = getselection(session, selector)
 
-    # Category uri
-    ## Find category in selector
-    cat = None
-    for sel in selector:
-        if sel.startswith("="):
-            cat = sel[1:]
+        # Check selection
+        if not selection:
+            data = "Error: series matching selector not found."
+        else:
+            series = selection[0]
 
-    ## Build uri
-    if cat:
-        data['cat_uri'] = data['uri']+"/="+cat
+            # Page data dictionary
+            data = {
+                "title": Config.get("weblist","title_log") if Config.has_option("weblist","title_log") else DEFAULT_TITLE_LOG,
+                "series_title": series.title,
+                "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
+
+                "seasons": len(series.seasons),
+                "current": series.current,
+                "watched": series.epscurrent,
+                "total": series.epstotal,
+                "rating": series.rating,
+                "dropped": series.dropped,
+                "finished": series.finished,
+                "duration": series.duration,
+            }
+
+            # Get watch log
+            data['log'] = ''
+
+            for watch in session.query(Watched).filter(
+                    Watched.series == series
+            ).order_by(Watched.time.desc()):
+                data['log'] += LOG_HTML % {
+                    "season": watch.seasonnum,
+                    "episode": watch.finishep,
+                    "date": watch.time,
+                }
+
+            # Generate page
+            data = LOG_PAGE_HTML % data
     else:
-        data['cat_uri'] = data['uri']
+        # Split into selector arguments
+        selector = uri.split("/")
 
-    # Unsorted uri
-    data['nosort_uri'] = data['uri']+"/"+"/".join([x for x in selector if not x.startswith("@")])
+        ## Handle empty selectors
+        if not selector or selector == ['']:
+            selector = []
 
-    # Category list
-    data['categories'] = ''
+        if not selector and Config.has_option("weblist", "default"):
+            selector = Config.get("weblist", "default").split()
 
-    for cat in session.query(Series).group_by(Series.category).all():
-        data['categories'] += CATEGORY_HTML % {
-            "title": cat.category,
-            "link": data['uri']+"/="+cat.category,
+        # Page data dictionary
+        data = {
+            "series": "",
+            "seriestime": 1.56,
+            "selector": " ".join(selector) if selector else "All Series",
+            "title": Config.get("weblist","title_list") if Config.has_option("weblist","title_list") else DEFAULT_TITLE_LOG,
+            "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
         }
 
-    # Retrieve series
-    selection = getselection(session, selector)
-    data['time_minutes'], data['time_days'] = gettime(selection)
-    data['numseries'] = len(selection)
+        # Category uri
+        ## Find category in selector
+        cat = None
+        for sel in selector:
+            if sel.startswith("="):
+                cat = sel[1:]
 
-    # Add series to list
-    for series in selection:
-        data['series'] += SERIES_HTML % {
-            "title": series.title,
-            "rate": series.rating,
-            "dropped": series.dropped,
-            "finished": series.finished,
-            "season": series.current,
-            "link": series.getlink(),
+        ## Build uri
+        if cat:
+            data['cat_uri'] = data['uri']+"/="+cat
+        else:
+            data['cat_uri'] = data['uri']
 
-            "watched": str(series.epscurrent),
-            "total": str(series.epstotal) if series.epstotal else "??",
-        }
+        # Unsorted uri
+        data['nosort_uri'] = data['uri']+"/"+"/".join([x for x in selector if not x.startswith("@")])
+
+        # Category list
+        data['categories'] = ''
+
+        for cat in session.query(Series).group_by(Series.category).all():
+            data['categories'] += CATEGORY_HTML % {
+                "title": cat.category,
+                "link": data['uri']+"/="+cat.category,
+            }
+
+        # Retrieve series
+        selection = getselection(session, selector)
+        data['time_minutes'], data['time_days'] = gettime(selection)
+        data['numseries'] = len(selection)
+
+        # Add series to list
+        for series in selection:
+            data['series'] += SERIES_HTML % {
+                "title": series.title,
+                "rate": series.rating,
+                "dropped": series.dropped,
+                "finished": series.finished,
+                "season": series.current,
+                "link": series.getlink(),
+                "loglink": data['uri']+"/log/"+quote(series.title),
+
+                "watched": str(series.epscurrent),
+                "total": str(series.epstotal) if series.epstotal else "??",
+            }
+
+        # Generate page
+        data = PAGE_HTML % data
 
     # Send response
     start_response('200 OK', [('Content-Type', 'text/html')])
-    data = PAGE_HTML % data
-
-    # Calculate generation time
     return data.replace("{{GENTIME}}", str(round(time.time()-start_time, 3)), 1)
 
 @command()

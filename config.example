@@ -8,8 +8,10 @@
 
 # Weblist configuration
 [weblist]
-## Title displayed
-title=Watch List
+## Title displayed for list pages
+title_list=Watch List
+## Title displayed for log pages
+title_log=Watch Log
 ## Default selector to display
 default=@title
 
