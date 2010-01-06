@@ -27,6 +27,7 @@ DEFAULT_TITLE_LOG = "Watch Log"
 DEFAULT_LINK = "http://en.wikipedia.org/wiki/Special:Search?search=%s"
 
 DATE_FORMAT = "%a %d %b, %Y . %H:%M"
+DATE_FORMAT_HTML = "%a %d %b, %Y %H:%M"
 
 COLOR = {
     "normal": "\033[0m",
@@ -1004,7 +1005,7 @@ def application(environ, start_response):
                 data['log'] += LOG_HTML % {
                     "season": watch.seasonnum,
                     "episode": watch.finishep,
-                    "date": watch.time,
+                    "date": watch.time.strftime(DATE_FORMAT_HTML),
                 }
 
             # Generate page
