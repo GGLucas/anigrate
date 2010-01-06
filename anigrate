@@ -439,10 +439,10 @@ LOG_PAGE_HTML = """
 
     <div id="info" class="dropped_%(dropped)d finished_%(finished)d">
         <ul>
-            <li><span>Latest</span> <span>S%(current)d %(watched)d/%(total)d</span></li>
-            <li><span>Seasons</span> <span>%(seasons)d</span></li>
-            <li><span>Duration</span> <span>%(duration)d minutes/ep</span></li>
-            <li><span>Rating</span> <span>%(rating)d</span></li>
+            <li><span>Latest</span> <span>S%(current)s %(watched)s/%(total)s</span></li>
+            <li><span>Seasons</span> <span>%(seasons)s</span></li>
+            <li><span>Duration</span> <span>%(duration)s min/ep</span></li>
+            <li><span>Rating</span> <span>%(rating)s</span></li>
         </ul>
     </div>
 
@@ -922,13 +922,13 @@ def application(environ, start_response):
                 "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
 
                 "seasons": len(series.seasons),
-                "current": series.current,
-                "watched": series.epscurrent,
-                "total": series.epstotal,
-                "rating": series.rating,
+                "current": str(series.current),
+                "watched": str(series.epscurrent),
+                "total": str(series.epstotal) if series.epstotal else "??",
+                "rating": str(series.rating) if series.rating else "??",
+                "duration": str(series.duration),
                 "dropped": series.dropped,
                 "finished": series.finished,
-                "duration": series.duration,
             }
 
             # Get watch log
@@ -1012,6 +1012,9 @@ def application(environ, start_response):
 
         # Generate page
         data = PAGE_HTML % data
+
+    # Close session
+    session.close()
 
     # Send response
     start_response('200 OK', [('Content-Type', 'text/html')])
