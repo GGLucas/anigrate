@@ -936,7 +936,7 @@ def application(environ, start_response):
 
             for watch in session.query(Watched).filter(
                     Watched.series == series
-            ).order_by(Watched.time.desc()):
+            ).order_by(Watched.time.desc(), Watched.seasonnum.desc(), Watched.finishep.desc()):
                 data['log'] += LOG_HTML % {
                     "season": watch.seasonnum,
                     "episode": watch.finishep,
@@ -1725,26 +1725,13 @@ def hist(arg, selector):
 
 
     # Build query
-    q = session.query(Watched).order_by(Watched.time.desc())
-    av = None
-
-    # Get selection
-    if selector:
-        selection = getselection(session, selector)
-        for sel in selection:
-            criterium = (Watched.series == sel)
-            av = or_(av, criterium) if av else criterium
-
-        q = q.filter(av)
-
-    # Limit
-    q = q.limit(num)
+    q = session.query(Watched).order_by(Watched.time.desc()).limit(num)
 
     # Display header
     print(DISPLAY_HIST_HEADER)
 
     for watch in q.all():
-        dispwatched(watch.getseries(session), watch)
+        dispwatched(watch.series, watch)
 
     # Display footer
     print(DISPLAY_HIST_FOOTER)
@@ -1767,7 +1754,11 @@ def log(arg, selector):
         dispseries(sel)
         watched = session.query(Watched).filter(
             Watched.series == sel
-        ).order_by(Watched.time.desc()).all() 
+        ) .order_by(
+            Watched.time.desc(),
+            Watched.seasonnum.desc(),
+            Watched.finishep.desc()
+        ).all()
 
         if watched:
             # Display header
