@@ -204,7 +204,7 @@ Selectors:
         When specified, match all series that end with the selector.
 
     %%prefix
-        Default behaviour: match all series that start with with the selector.
+        Default behaviour: match all series that start with the selector.
 
     @rating, @activity, @watched, @title
         Set field to sort by, you can sort by series rating, series latest 
@@ -222,7 +222,7 @@ Examples:
         List all series in the database.
 
     anigrate li: =anime
-        List all series with category "anime".
+        List all series in category "anime".
 
     anigrate li: +w
         List only series currently being watched.
@@ -697,6 +697,7 @@ class Watched(Base):
 # {{{ Utility functions
 commands = {}
 
+# {{{ command
 def command(name=None, cmds=None):
     """Register a function as a command."""
     def cmd(func):
@@ -711,7 +712,9 @@ def command(name=None, cmds=None):
         return func
 
     return cmd
+# }}}
 
+# {{{ getcommand
 def getcommand(name, cmds=None):
     """Get a command by name."""
     # Get command dict
@@ -734,7 +737,9 @@ def getcommand(name, cmds=None):
         return candidate
     else:
         return None
+# }}}
 
+# {{{ dbbind
 def dbbind():
     """Bind the sqlalchemy database engine and return the session."""
     # Try to read config
@@ -762,7 +767,9 @@ def dbbind():
                 initdb(session=Session())
 
     return Session()
+# }}}
 
+# {{{ getselection
 def getselection(session, selector, list=True):
     """Get all anime matching a selector"""
     q = session.query(Series)
@@ -831,17 +838,9 @@ def getselection(session, selector, list=True):
             q = q.filter(Series.title.startswith(selector))
 
     return q.all() if list else q
+# }}}
 
-def gettime(selection):
-    """Get total time watching for this selection."""
-    total = 0
-
-    for sel in selection:
-        total += sel.epsall*sel.duration
-
-    totaldays = total/float(1440)
-    return (total, totaldays)
-
+# {{{ padstr
 def padstr(string, pad, right=False):
     # Convert to string
     string = str(string)
@@ -854,10 +853,39 @@ def padstr(string, pad, right=False):
             string = string+" "
 
     return string
+# }}}
+
+# {{{ gettime
+def gettime(selection):
+    """Get total time watching for this selection."""
+    total = 0
+
+    for sel in selection:
+        total += sel.epsall*sel.duration
+
+    totaldays = total/float(1440)
+    return (total, totaldays)
+# }}}
+
+# {{{ getstats
+def getstats(session, selection):
+    """ Get a dictionary with various statistics. """
+    stats = {
+        "count": len(selection),
+        "total": 0,
+        "year": {},
+        "month": {},
+        "weekday": {},
+        "hour": {},
+    }
+
+    return stats
+# }}}
 
 # }}}
 
 # {{{ Display functions
+# {{{ dispseries
 def dispseries(sel, display=True):
     """Display a line for a series."""
     data = {
@@ -916,7 +944,9 @@ def dispseries(sel, display=True):
         print(DISPLAY_SERIES % data)
     else:
         return DISPLAY_SERIES % data
+# }}}
 
+# {{{ dispwatched
 def dispwatched(sel, watched, display=True, template=None):
     """Display a watched episode string"""
     data = {
@@ -960,8 +990,7 @@ def dispwatched(sel, watched, display=True, template=None):
         print(template % data)
     else:
         return template % data
-
-
+# }}}
 # }}}
 
 # {{{ Weblist
@@ -975,7 +1004,7 @@ except:
 import gzip
 import StringIO
 
-# WSGI Application
+# {{{ WSGI Application
 def application(environ, start_response):
     # Save time
     start_time = time.time()
@@ -998,6 +1027,7 @@ def application(environ, start_response):
 
     # Check for page to display
     if uri.startswith("log/"):
+        # {{{ Log page
         # Remove log argument
         selector = [" ".join(uri.split("/")[1:])]
 
@@ -1044,7 +1074,9 @@ def application(environ, start_response):
 
             # Generate page
             data = LOG_PAGE_HTML % data
+        # }}}
     else:
+        # {{{ List page
         # Split into selector arguments
         selector = uri.split("/")
 
@@ -1111,6 +1143,7 @@ def application(environ, start_response):
 
         # Generate page
         data = PAGE_HTML % data
+        # }}}
 
     # Close session
     session.close()
@@ -1130,7 +1163,9 @@ def application(environ, start_response):
         gzfile.write(data.replace("{{GENTIME}}", str(round(time.time()-start_time, 3)), 1))
         gzfile.close()
         return strfile.getvalue()
+# }}}
 
+# {{{ runserver
 @command()
 def runserver(arg, selector):
     if not arg:
@@ -1170,6 +1205,7 @@ def runserver(arg, selector):
         servers = ['http']
         if HAVE_FLUP: servers += ['fcgi','scgi','ajp']
         return "Error: invalid server type. Available: %s." % ", ".join(servers)
+# }}}
 # }}}
 
 # {{{ Commands
@@ -1866,9 +1902,20 @@ def hist(arg, selector):
     else:
         num = 15
 
-
     # Build query
-    q = session.query(Watched).order_by(Watched.time.desc()).limit(num)
+    q = session.query(Watched)
+
+    # Selection
+    if selector:
+        selection = getselection(session, selector, list=False).subquery()
+        q = q.join((selection, Watched.series_id == selection.c.id))
+    
+    # Sort
+    q = q.order_by(Watched.time.desc())
+
+    # Limit
+    if num:
+        q = q.limit(num)
 
     # Display header
     print(DISPLAY_HIST_HEADER)
