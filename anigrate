@@ -148,6 +148,21 @@ Commands:
         Set season with number <num> as the active season. Can be a relative 
         offset like +1 or -2.
 
+    match: [selector]
+        Output a simple no-nonsense list of series matched by [selector],
+        useful for piping into other binaries. If no selector is given, match
+        all series.
+
+    info: [selector]
+        Output a no-nonsense list with information on all series matched by
+        [selector], useful for piping into other binaries. If no selector is 
+        given, match all series.
+
+        Outputs series info in format:
+            title\tcurrent_episode\ttotal_episodes\tcurrent_season\trating
+
+        ie. each item is separated by a tab character for easy parsing.
+
     runserver [type] [host] [port]
         Run a server displaying an html public list on [host] (default: localhost)
         and [port] (default: 4310). Type is set to "http" by default and will 
@@ -177,7 +192,7 @@ Selectors:
         will only match series that satisfy the condition.
 
     =<category>
-        Will only match with the specified category.
+        Will only match series in the specified category.
 
     %%exact
         When specified, only match series that exactly match the full selector.
@@ -199,7 +214,7 @@ Selectors:
         Default sort method, sorts by activity but splits into watching,
         finished and dropped groups first.
 
-Examples
+Examples:
     Here are some example use cases, note that every selector specifier or 
     command can be shortened to its smallest non-ambiguous prefix.
 
@@ -1783,10 +1798,42 @@ def watch(arg, selector):
     session.commit()
 # }}}
 
+# {{{ match
+@command()
+def match(arg, selector):
+    """Simply display series matching a selector."""
+    # Bind database
+    session = dbbind()
+
+    # Get selection
+    selection = getselection(session, selector)
+
+    # Display header
+    for sel in selection:
+        print(sel.title)
+# }}}
+
+# {{{ info
+@command()
+def info(arg, selector):
+    """Simply display info about series matching a selector."""
+    # Bind database
+    session = dbbind()
+
+    # Get selection
+    selection = getselection(session, selector)
+
+    # Display header
+    for sel in selection:
+        print("%s\t%d\t%d\t%d\t%d" %
+            (sel.title, sel.epscurrent, sel.epstotal,
+             sel.current, sel.rating))
+# }}}
+
 # {{{ list
 @command()
 def list(arg, selector):
-    """Display lines matching a selector."""
+    """Display series matching a selector."""
     # Bind database
     session = dbbind()
 
