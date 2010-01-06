@@ -1,9 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 import sys
 import os
 import datetime
 
-from decorator import decorator
 from ConfigParser import ConfigParser
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, create_engine
@@ -83,6 +82,16 @@ Commands:
         Set season with number <num> as the active season. Can be a relative 
         offset like +1 or -2.
 
+    runserver [type] [host] [port]
+        Run a server displaying an html public list on [host] (default: localhost)
+        and [port] (default: 4310). Type is set to "http" by default and will 
+        host a simple http webserver not meant to be used in production. If 
+        flup is installed, you can additionally specify [type] to be "fcgi", 
+        "scgi" or "ajp" and it will host a server with that protocol.
+
+        Note that the main anigrate binary can also be used as through mod_wsgi
+        as a wsgi script and it will display the same html public list.
+
     help
         Show this help message
 
@@ -111,11 +120,13 @@ Selectors:
     %%prefix
         Default behaviour: match all series that start with with the selector.
 
-    @rating, @activity, @watched
+    @rating, @activity, @watched, @title
         Set field to sort by, you can sort by series rating, series latest 
-        activity and amount of episodes watched respectively. When no sort
-        specifier is given, it sorts by latest activity.
+        activity, amount of episodes watched and title respectively.
 
+    @split
+        Default sort method, sorts by activity but splits into watching,
+        finished and dropped groups first.
 
 Examples
     Here are some example use cases, note that every selector specifier or 
@@ -156,10 +167,181 @@ Examples
 """
 # }}}
 
+# {{{ Weblist HTML
+PAGE_HTML = """
+<!DOCTYPE html>
+
+<html lang='en-GB'>
+  <head>
+    <title>%(title)s: %(selector)s</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <style type='text/css'>
+        body {
+            font-family: sans-serif; 
+            background: white;
+            color: black;
+        }
+
+        #header > h1, #header > h2 {
+            margin: 0;
+            text-align: center;
+        }
+
+        #header > span {
+            display: block;
+            text-align: center;
+        }
+
+        #quicklinks {
+            margin: 1em auto 0;
+            border: 1px solid #cccccc;
+            background: #f7f7f7;
+            display: table;
+        }
+
+        #quicklinks ul {
+            margin: 0;
+            padding: 0;
+        }
+
+        #quicklinks li {
+            list-style: square inside;
+            margin: 0;
+            padding-top: 0.3em;
+            font-size: 0.8em;
+        }
+
+        #quicklinks a:link, #quicklinks a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        #quicklinks a:hover {
+            text-decoration: underline;
+        }
+
+        #quicklinks > div {
+            padding: 1em;
+            min-width: 8em;
+            float: left;
+        }
+
+        #quicklinks h3 {
+            margin: 0;
+        }
+
+        #series ul {
+            -moz-column-count: 4;
+            -webkit-column-count: 4;
+            column-count: 4;
+            margin: 1em 0;
+            padding: 0;
+        }
+
+        #series li {
+            display: block;
+            list-style: none;
+            padding: .5em;
+            margin: 0;
+        }
+
+        #series li span {
+            display: none;
+            float: right;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        #series li:hover span {
+            display: block;
+        }
+
+        #series li a:link, li a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        #series li a:hover {
+            text-decoration: underline;
+        }
+
+        #series li.f_0 { font-weight: bold; }
+        #series li.d_1 a { color: #cc3030; }
+
+        #series li.r_10 { background: #80ff80; }
+        #series li.r_9 { background: #99ff80; }
+        #series li.r_8 { background: #b3ff80; }
+        #series li.r_7 { background: #ccff80; }
+        #series li.r_6 { background: #e6ff80; }
+        #series li.r_5 { background: #ffff80; }
+        #series li.r_4 { background: #ffe680; }
+        #series li.r_3 { background: #ffcc80; }
+        #series li.r_2 { background: #ffb380; }
+        #series li.r_1 { background: #ff9980; }
+    </style>
+  </head>
+  <body>
+    <div id='header'>
+      <h1>%(title)s</h1>
+      <h2>%(selector)s</h2>
+      <span>%(numseries)d total. %(time_days).1f days</span>
+    </div>
+
+    <div id='quicklinks'>
+        <div>
+            <h3>Category:</h3>
+            <ul>
+                <li><a href="%(uri)s">all categories</a></li>
+                %(categories)s
+            </ul>
+        </div>
+
+        <div>
+            <h3>Display:</h3>
+            <ul>
+                <li><a href="%(cat_uri)s/@title">everything</a></li>
+                <li><a href="%(cat_uri)s/+watching">watching</a></li>
+                <li><a href="%(cat_uri)s/+finished/@rating">finished</a></li>
+                <li><a href="%(cat_uri)s/+dropped">dropped</a></li>
+            </ul>
+        </div>
+
+        <div>
+            <h3>Sort:</h3>
+            <ul>
+                <li><a href="%(nosort_uri)s/@title">title</a></li>
+                <li><a href="%(nosort_uri)s/@rating">rating</a></li>
+                <li><a href="%(nosort_uri)s/@activity">activity</a></li>
+                <li><a href="%(nosort_uri)s/@split">split</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div id='series'>
+      <ul>
+        %(series)s
+      </ul>
+    </div>
+  </body>
+</html>
+"""
+
+SERIES_HTML = """<li class="r_%(rate)d d_%(dropped)d f_%(finished)d"><a href="%(link)s">%(title)s</a><span>S%(season)d %(watched)s/%(total)s</span></li>\n"""
+
+CATEGORY_HTML = """<li><a href="%(link)s">%(title)s</a></li>"""
+
+# }}}
+
 # {{{ Constants
+Config = None
+
 CONF_DIR = os.getenv("HOME")+"/.anigrate"
 DB_LOCATION = CONF_DIR+"/db"
 CONF_LOCATION = CONF_DIR+"/config"
+
+DEFAULT_TITLE = "Watch List"
+DEFAULT_LINK = "http://en.wikipedia.org/wiki/Special:Search?search=%s"
 
 COLOR = {
     "normal": "\033[0m",
@@ -228,6 +410,15 @@ class Series(Base):
         ).filter(
             Season.num == (self.current if num==None else num)
         ).first()
+
+    def getlink(self):
+        """Get the link to open for this series."""
+        if Config.has_option("link", self.category):
+            return Config.get("link", self.category) % self.title
+        elif Config.has_option("link", "default"):
+            return Config.get("link", "default") % self.title
+        else:
+            return DEFAULT_LINK % self.title
 
     def eval_finished(self, session):
         """Evaluate whether the series is finished."""
@@ -323,24 +514,28 @@ def getcommand(name, cmds=None):
 def dbbind():
     """Bind the sqlalchemy database engine and return the session."""
     # Try to read config
-    config = ConfigParser()
-    config.read([CONF_LOCATION,])
+    if not hasattr(Session, "_Bound") or not Session._Bound:
+        global Config
+        Config = ConfigParser()
+        Config.read([CONF_LOCATION,])
 
-    if config.has_option("database", "uri"):
-        engine = create_engine(config.get("database", "uri"))
-        Base.metadata.bind = engine
-        Session.configure(bind=engine)
-    else:
-        # Default location
-        if not os.access(CONF_DIR, os.F_OK):
-            os.mkdir(CONF_DIR)
+        if Config.has_option("database", "uri"):
+            engine = create_engine(Config.get("database", "uri"))
+            Base.metadata.bind = engine
+            Session._Bound = True
+            Session.configure(bind=engine)
+        else:
+            # Default location
+            if not os.access(CONF_DIR, os.F_OK):
+                os.mkdir(CONF_DIR)
 
-        engine = create_engine('sqlite:///'+DB_LOCATION)
-        Base.metadata.bind = engine
-        Session.configure(bind=engine)
+            engine = create_engine('sqlite:///'+DB_LOCATION)
+            Base.metadata.bind = engine
+            Session.configure(bind=engine)
+            Session._Bound = True
 
-        if not os.access(DB_LOCATION, os.F_OK):
-            initdb(session=Session())
+            if not os.access(DB_LOCATION, os.F_OK):
+                initdb(session=Session())
 
     return Session()
 
@@ -385,6 +580,14 @@ def getselection(session, selector, list=True):
                 selector.remove(opt)
                 sort = True
                 q = q.order_by(Series.epscurrent.desc())
+            elif "@title".startswith(opt):
+                selector.remove(opt)
+                sort = True
+                q = q.order_by(Series.title.asc())
+            elif "@split".startswith(opt):
+                selector.remove(opt)
+                sort = True
+                q = q.order_by(Series.dropped.asc(), Series.finished.asc(), Series.mtime.desc())
 
     # Default sort order
     if not sort:
@@ -403,6 +606,16 @@ def getselection(session, selector, list=True):
             q = q.filter(Series.title.startswith(selector))
 
     return q.all() if list else q
+
+def gettime(selection):
+    """Get total time watching for this selection."""
+    total = 0
+
+    for sel in selection:
+        total += sel.epsall*sel.duration
+
+    totaldays = total/1440
+    return (total, totaldays)
 
 def padstr(string, pad, right=False):
     # Convert to string
@@ -524,6 +737,128 @@ def dispwatched(sel, watched, display=True, template=None):
         return template % data
 
 
+# }}}
+
+# {{{ Weblist
+# Try to get flup
+try:
+    import flup
+    HAVE_FLUP = True
+except:
+    HAVE_FLUP = False
+
+# WSGI Application
+def application(environ, start_response):
+    # Build selector from uri
+    uri = environ.get("PATH_INFO", "").lstrip("/")
+    selector = uri.split("/")
+
+    # Connect to db
+    session = dbbind()
+
+    ## Handle empty selectors
+    if not selector or selector == ['']:
+        selector = []
+
+    if not selector and Config.has_option("weblist", "default"):
+        selector = Config.get("weblist", "default").split()
+
+    # Page data dictionary
+    data = {
+        "series": "",
+        "seriestime": 1.56,
+        "selector": " ".join(selector) if selector else "All Series",
+        "title": Config.get("weblist","title") if Config.has_option("weblist","title") else DEFAULT_TITLE,
+        "uri": environ.get("SCRIPT_NAME", "/"),
+    }
+
+    # Category uri
+    ## Find category in selector
+    cat = None
+    for sel in selector:
+        if sel.startswith("="):
+            cat = sel[1:]
+
+    ## Build uri
+    if cat:
+        data['cat_uri'] = data['uri']+"/="+cat
+    else:
+        data['cat_uri'] = data['uri']
+
+    # Unsorted uri
+    data['nosort_uri'] = data['uri']+"/"+"/".join([x for x in selector if not x.startswith("@")])
+
+    # Category list
+    data['categories'] = ''
+
+    for cat in session.query(Series).group_by(Series.category).all():
+        data['categories'] += CATEGORY_HTML % {
+            "title": cat.category,
+            "link": data['uri']+"/="+cat.category,
+        }
+
+    # Retrieve series
+    selection = getselection(session, selector)
+    data['time_minutes'], data['time_days'] = gettime(selection)
+    data['numseries'] = len(selection)
+
+    # Add series to list
+    for series in selection:
+        data['series'] += SERIES_HTML % {
+            "title": series.title,
+            "rate": series.rating,
+            "dropped": series.dropped,
+            "finished": series.finished,
+            "season": series.current,
+            "link": series.getlink(),
+
+            "watched": str(series.epscurrent),
+            "total": str(series.epstotal) if series.epstotal else "??",
+        }
+
+    # Send response
+    start_response('200 OK', [('Content-Type', 'text/html')])
+    return PAGE_HTML % data
+
+@command()
+def runserver(arg, selector):
+    if not arg:
+        arg = ["http"]
+
+    if len(arg) >= 3:
+        try:
+            int(arg[2])
+        except:
+            return "Error: port (argument 3) is not a valid integer."
+
+        bind = (arg[1], int(arg[2]))
+    else:
+        bind = ("localhost", 4310)
+
+    if arg[0] in ('fcgi','scgi','ajp'):
+        if HAVE_FLUP:
+            if arg[0] == "fcgi":
+                from flup.server.fcgi import WSGIServer
+            elif arg[0] == "scgi":
+                from flup.server.scgi import WSGIServer
+            elif arg[0] == "ajp":
+                from flup.server.ajp import WSGIServer
+
+            print("serving %s list on %s port %d." % (arg[0], bind[0], bind[1]))
+            WSGIServer(application,
+                bindAddress=bind
+            ).run()
+        else:
+            return "Error: flup is required to be installed for fcgi, scgi or ajp servers."
+    elif arg[0] == 'http':
+        from wsgiref.simple_server import make_server
+        print("serving http list on %s port %d." % bind)
+        srv = make_server(bind[0], bind[1], application)
+        srv.serve_forever()
+    else:
+        servers = ['http']
+        if HAVE_FLUP: servers += ['fcgi','scgi','ajp']
+        return "Error: invalid server type. Available: %s." % ", ".join(servers)
 # }}}
 
 # {{{ Commands
@@ -727,16 +1062,9 @@ def time(arg, selector):
     # Bind database
     session = dbbind()
     selection = getselection(session, selector)
-    total = 0
 
-    for sel in selection:
-        total += sel.epsall*sel.duration
-
-    totaldays = total/1440
     print("Total time spent watching:")
-    print("%.1f days = %d minutes" % (totaldays, total))
-
-    session.commit()
+    print("%.1f days = %d minutes" % gettime(selection))
 # }}}
 
 # {{{ season

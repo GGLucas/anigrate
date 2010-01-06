@@ -1,7 +1,23 @@
 ## Put this in ~/.anigrate/config
 
 # Database location examples
-## Use sqlalchemy connection strings 
 [database]
+## Use sqlalchemy connection strings 
 #uri=sqlite:////home/myuser/.anigrate/db
 #uri=mysql://remoteuser:password@domain.tld:5432/anigratedb
+
+# Weblist configuration
+[weblist]
+## Title displayed
+title=Watch List
+## Default selector to display
+default=@title
+
+# Links opened for series, by category
+[link]
+## Wikipedia opened when nothing else is known
+default=http://en.wikipedia.org/wiki/Special:Search?search=%s
+## If category=anime, open myanimelist
+anime=http://myanimelist.net/anime.php?q=%s
+## If category=tv, open tv.com
+tv=http://www.tv.com/search.php?qs=
