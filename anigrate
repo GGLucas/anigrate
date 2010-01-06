@@ -1790,16 +1790,17 @@ def main():
     ## Check if there exists a selector
     if filter(lambda x: x.endswith(":"), arg):
         selector = []
+        newargs = addto = []
 
         # Build selector
-        for i,x in enumerate(reversed(arg[1:])):
+        for i,x in enumerate(arg):
+            addto.append(x)
+
             if x.endswith(":"):
-                break
-            else:
-                selector.insert(0, x)
-                arg.remove(x)
+                addto = selector
 
         # Remove colon
+        arg = newargs
         arg[-1] = arg[-1][:-1]
     else:
         selector=[]
