@@ -6,7 +6,7 @@ import datetime
 from ConfigParser import ConfigParser
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relation
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import and_, or_, not_
 
@@ -413,13 +413,14 @@ class Series(Base):
     epsall = Column(Integer, default=0)
     finished = Column(Boolean, default=False)
 
-    def getseason(self, session, num=None):
-        """Retrieve a season based on its number."""
-        return session.query(Season).filter(
-            Season.series == self.id
-        ).filter(
-            Season.num == (self.current if num==None else num)
-        ).first()
+    @property
+    def current_season(self):
+        return self.season_bynum(self.current)
+
+    def season_bynum(self, num):
+        for season in self.seasons:
+            if season.num == num:
+                return season
 
     def getlink(self):
         """Get the link to open for this series."""
@@ -430,14 +431,13 @@ class Series(Base):
         else:
             return DEFAULT_LINK % self.title
 
-    def eval_finished(self, session):
+    def eval_finished(self):
         """Evaluate whether the series is finished."""
         self.finished = True
         self.seasontotal = 0
         self.epsall = 0
 
-        for season in session.query(Season).filter(
-                Season.series == self.id).all():
+        for season in self.seasons:
             if season.current_watched < season.episode_total \
             or season.episode_total == 0:
                 self.finished = False
@@ -457,7 +457,9 @@ class Season(Base):
     id = Column(Integer, primary_key=True)
     num = Column(Integer)
 
-    series = Column(ForeignKey("series.id"))
+    series_id = Column(ForeignKey("series.id"))
+    series = relation(Series, primaryjoin=(series_id == Series.id), backref="seasons")
+
     episode_total = Column(Integer, default=0)
     current_watched = Column(Integer, default=0)
 
@@ -466,18 +468,17 @@ class Watched(Base):
     __tablename__ = "watched"
     id = Column(Integer, primary_key=True)
 
-    season = Column(ForeignKey("seasons.id"))
+    season_id = Column(ForeignKey("seasons.id"))
     seasonnum = Column(Integer)
-    series = Column(ForeignKey("series.id"))
+    season = relation(Season, primaryjoin=(season_id == Season.id), backref="watched")
+
+    series_id = Column(ForeignKey("series.id"))
+    series = relation(Series, primaryjoin=(series_id == Series.id), backref="watched")
+
     time = Column(DateTime)
 
     startep = Column(Integer)
     finishep = Column(Integer)
-
-    def getseries(self, session):
-        return session.query(Series).filter(
-            Series.id == self.series
-        ).first()
 # }}}
 
 # {{{ Utility functions
@@ -527,7 +528,7 @@ def dbbind():
     if not hasattr(Session, "_Bound") or not Session._Bound:
         global Config
         Config = ConfigParser()
-        Config.read([CONF_LOCATION,])
+        Config.read([CONF_LOCATION,os.path.join(os.getcwd(), "anigraterc")])
 
         if Config.has_option("database", "uri"):
             engine = create_engine(Config.get("database", "uri"))
@@ -952,7 +953,7 @@ def add(arg, selector):
         for i in range(seasons):
             season = Season()
             season.num = i+1
-            season.series = series.id
+            season.series = series
             season.episode_total = total
             season.current_watched = watched
             session.add(season)
@@ -960,8 +961,8 @@ def add(arg, selector):
             if watched > 0:
                 session.commit()
                 w = Watched()
-                w.series = series.id
-                w.season = season.id
+                w.series = series
+                w.season = season
                 w.time = datetime.datetime.now()
                 w.startep = 0
                 w.finishep = watched
@@ -969,12 +970,12 @@ def add(arg, selector):
                 session.add(w)
 
         series.current = seasons
-        series.eval_finished(session)
+        series.eval_finished()
         session.commit()
     else:
         ## First season
         season = Season(num=1)
-        season.series = series.id
+        season.series = series
         session.add(season)
         session.commit()
 # }}}
@@ -996,8 +997,8 @@ def remove(arg, selector):
     for sel in selection:
         print("Removing: %s..." % sel.title)
 
-        for season in session.query(Season).filter(Season.series == sel.id).all():
-            session.query(Watched).filter(Watched.season == season.id).delete(False)
+        for season in sel.seasons:
+            session.query(Watched).filter(Watched.season == season).delete(False)
             session.delete(season)
 
         session.delete(sel)
@@ -1025,7 +1026,7 @@ def rate(arg, selector):
     selection = getselection(session, selector)
 
     for sel in selection:
-        print("Rating %d: %s..." %(score, sel.title))
+        print("rating=%d: %s..." %(score, sel.title))
         sel.rating = score
 
     session.commit()
@@ -1046,7 +1047,7 @@ def category(arg, selector):
     selection = getselection(session, selector)
 
     for sel in selection:
-        print("Category %s: %s..." %(arg[0], sel.title))
+        print("category=%s: %s..." %(arg[0], sel.title))
         sel.category = arg[0]
 
     session.commit()
@@ -1068,7 +1069,7 @@ def drop(arg, selector):
         return "Error: no series match selector."
 
     for sel in selection:
-        print("Dropping: %s..." % sel.title)
+        print("dropped: %s..." % sel.title)
         sel.dropped = True
 
     session.commit()
@@ -1084,7 +1085,7 @@ def undrop(arg, selector):
     selection = getselection(session, selector)
 
     for sel in selection:
-        print("Undropping: %s..." % sel.title)
+        print("undropped: %s..." % sel.title)
         sel.dropped = False
 
     session.commit()
@@ -1110,13 +1111,13 @@ def length(arg, selector):
     selection = getselection(session, selector)
 
     for sel in selection:
-        season = sel.getseason(session)
+        season = sel.current_season
         season.episode_total = length
 
-        print("Setting season %d length to %d: %s..."%
+        print("season %d length = %d: %s..."%
                 (season.num, length, sel.title))
 
-        sel.eval_finished(session)
+        sel.eval_finished()
 
     session.commit()
 # }}}
@@ -1143,7 +1144,7 @@ def duration(arg, selector):
     for sel in selection:
         sel.duration = duration
 
-        print("Setting duration to %d: %s..."%
+        print("duration=%d: %s..."%
                 (duration, sel.title))
 
     session.commit()
@@ -1216,15 +1217,16 @@ def active(arg, selector):
                     % (sel.title, sn))
             continue
 
-        if not sel.getseason(session, sn):
+        season = sel.season_bynum(sn)
+
+        if not season:
             print("Error: season %d for series %s doesn't exist."
                     % (sn, sel.title))
             continue
 
-        print("Activating season %d: %s..." % (sn, sel.title))
-        season = sel.getseason(session, sn)
-        sel.current = sn
-        sel.eval_finished(session)
+        print("activate season = %d: %s..." % (sn, sel.title))
+        sel.current = season
+        sel.eval_finished()
 
     session.commit()
 # }}}
@@ -1277,13 +1279,13 @@ def add(arg, selector):
                     % (sel.title, sn))
             continue
 
-        if sel.getseason(session, sn):
+        if sel.season_bynum(sn):
             print("Error: season %d for series %s already exists."
                     % (sn, sel.title))
             continue
 
         season = Season()
-        season.series = sel.id
+        season.series = sel
         season.num = sn
         season.current_watched = watched
         season.episode_total = total
@@ -1295,15 +1297,15 @@ def add(arg, selector):
         if watched:
             session.commit()
             w = Watched()
-            w.series = sel.id
-            w.season = season.id
+            w.series = sel
+            w.season = season
             w.time = datetime.datetime.now()
             w.seasonnum = season.num
             w.startep = 0
             w.finishep = watched
             session.add(w)
 
-        sel.eval_finished(session)
+        sel.eval_finished()
 
     session.commit()
 # }}}
@@ -1340,7 +1342,7 @@ def remove(arg, selector):
             continue
 
         # Find season
-        season = sel.getseason(session, sn)
+        season = sel.season_bynum(sn)
 
         # Check for existence
         if not season:
@@ -1349,7 +1351,7 @@ def remove(arg, selector):
             continue
 
         # Delete watched
-        session.query(Watched).filter(Watched.season == season.id).delete(False)
+        session.query(Watched).filter(Watched.season == season).delete(False)
 
         # Delete
         print("Removing season %d: %s..." % (sn, sel.title))
@@ -1358,11 +1360,11 @@ def remove(arg, selector):
         if sel.current == sn:
             # Get new season number
             sn -= 1
-            while sn > 0 and not sel.getseason(session, sn):
+            while sn > 0 and not sel.season_bynum(sn):
                 sn -= 1
             sel.current = sn
 
-        sel.eval_finished(session)
+        sel.eval_finished()
 
 
     session.commit()
@@ -1393,13 +1395,13 @@ def length(arg, selector):
     selection = getselection(session, selector)
 
     for sel in selection:
-        season = sel.getseason(session, num)
+        season = sel.season_bynum(num)
         season.episode_total = length
 
-        print("Setting season %d length to %d: %s..."%
+        print("season %d length = %d: %s..."%
                 (num, length, sel.title))
 
-        sel.eval_finished(session)
+        sel.eval_finished()
 
     session.commit()
 # }}}
@@ -1437,7 +1439,7 @@ def watch(arg, selector):
     print(DISPLAY_HEADER)
 
     for sel in selection:
-        season = sel.getseason(session)
+        season = sel.current_season
         neww = season.current_watched+num if rel else num
 
         if neww < 0:
@@ -1448,7 +1450,7 @@ def watch(arg, selector):
 
         if neww < season.current_watched:
             watched = session.query(Watched).filter(
-                Watched.season == season.id
+                Watched.season == season
             ).order_by(Watched.finishep.desc()).all()
 
             for inst in watched:
@@ -1459,8 +1461,8 @@ def watch(arg, selector):
                     break
         elif neww > season.current_watched:
             watched = Watched()
-            watched.season = season.id
-            watched.series = sel.id
+            watched.season = season
+            watched.series = sel
             watched.startep = season.current_watched
             watched.finishep = neww
             watched.seasonnum = season.num
@@ -1469,14 +1471,14 @@ def watch(arg, selector):
 
         sel.mtime = datetime.datetime.now()
         season.current_watched = neww
-        sel.eval_finished(session)
+        sel.eval_finished()
 
         # Display series
         dispseries(sel)
 
         # Display log
         watched = session.query(Watched).filter(
-            Watched.series == sel.id
+            Watched.series == sel
         ).order_by(Watched.time.desc()).all() 
 
         if watched:
@@ -1534,17 +1536,20 @@ def hist(arg, selector):
 
 
     # Build query
-    q = session.query(Watched).order_by(Watched.time.desc()).limit(num)
+    q = session.query(Watched).order_by(Watched.time.desc())
     av = None
 
     # Get selection
     if selector:
         selection = getselection(session, selector)
         for sel in selection:
-            criterium = (Watched.series == sel.id)
+            criterium = (Watched.series == sel)
             av = or_(av, criterium) if av else criterium
 
         q = q.filter(av)
+
+    # Limit
+    q = q.limit(num)
 
     # Display header
     print(DISPLAY_HIST_HEADER)
@@ -1572,7 +1577,7 @@ def log(arg, selector):
     for sel in selection:
         dispseries(sel)
         watched = session.query(Watched).filter(
-            Watched.series == sel.id
+            Watched.series == sel
         ).order_by(Watched.time.desc()).all() 
 
         if watched:
