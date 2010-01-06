@@ -1095,8 +1095,12 @@ def application(environ, start_response):
     # Close session
     session.close()
 
+    # Get encodings
+    has_gzip = [enc for enc in environ.get("HTTP_ACCEPT_ENCODING","").split(",") 
+                if enc.split(";")[0] == "gzip"]
+
     # Send response
-    if Config.has_option("weblist", "gzip") and Config.get("weblist", "gzip") == "no":
+    if (Config.has_option("weblist", "gzip") and Config.get("weblist", "gzip") == "no") or not has_gzip:
         start_response('200 OK', [('Content-Type', 'text/html', 'Content-Encoding', 'gzip')])
         return data.replace("{{GENTIME}}", str(round(time.time()-start_time, 3)), 1)
     else:
