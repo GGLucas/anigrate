@@ -158,8 +158,13 @@ Commands:
         Note that the main anigrate binary can also be used as through mod_wsgi
         as a wsgi script and it will display the same html public list.
 
+        You can specify any selector to display a list for in the address by 
+        separating the terms with slashes. For example:
+
+            http://localhost:4310/=anime/+watching/@title
+
     help
-        Show this help message
+        Show this help message.
 
 Selectors:
     Selectors are used to find series to act upon. In its most basic form, a 
