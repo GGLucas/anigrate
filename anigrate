@@ -317,6 +317,15 @@ PAGE_HTML = """
             font-size: .6em;
         }
 
+        #legend div:last-child {
+            margin-top: 1em;
+        }
+
+        #legend h4 {
+            margin: 0;
+            padding: 0;
+        }
+
         #series ul {
             -moz-column-count: 4;
             -webkit-column-count: 4;
@@ -443,14 +452,16 @@ PAGE_HTML = """
 
     <div id="legend">
         <div>
-          Greener = Rated higher.<br/>
-          Redder = Rated lower.<br/>
-          White = Unrated.<br/>
+          <h4>Background</h4>
+          Greener: Rated higher.<br/>
+          Redder: Rated lower.<br/>
+          White: Unrated.<br/>
         </div>
 
         <div>
-          Bold = Currently watching.<br/>
-          Red = Dropped.<br/>
+          <h4>Text</h4>
+          Bold: Currently watching.<br/>
+          Red: Dropped.<br/>
         </div>
     </div>
 
