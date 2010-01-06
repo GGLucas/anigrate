@@ -26,6 +26,8 @@ DEFAULT_TITLE_LIST = "Watch List"
 DEFAULT_TITLE_LOG = "Watch Log"
 DEFAULT_LINK = "http://en.wikipedia.org/wiki/Special:Search?search=%s"
 
+DATE_FORMAT = "%a %d %b, %Y . %H:%M"
+
 COLOR = {
     "normal": "\033[0m",
     "unknown": "\033[1;35m",
@@ -55,11 +57,11 @@ DISPLAY_SERIES = """  %(title)s | %(epscurrent)s/%(epstotal)s | %(current)s | %(
 
 DISPLAY_WATCHED = """  %(title)s season %(season)s to ep %(finishep)s | %(date)s """
 
-DISPLAY_HIST_HEADER = """\n  %(header)sHistory%(normal)s\n ---------------------------------------------------+------------------""" % COLOR
-DISPLAY_HIST_FOOTER = """ ---------------------------------------------------+------------------\n"""
+DISPLAY_HIST_HEADER = """\n  %(header)sHistory%(normal)s\n ----------------------------------------------------+------------------+-------""" % COLOR
+DISPLAY_HIST_FOOTER = """ ----------------------------------------------------+------------------+-------\n"""
 
 DISPLAY_LOG_HEADER = """%(line)s ..........................................+.........+........+........%(normal)s""" % COLOR
-DISPLAY_LOG = """  season %(season)s to ep %(finishep)s                        . %(date)s """
+DISPLAY_LOG = """  season %(season)s to ep %(finishep)s                       . %(date)s """
 DISPLAY_LOG_FOOTER = """%(line)s ..........................................+.........+........+........%(normal)s""" % COLOR
 # }}}
 
@@ -342,7 +344,7 @@ PAGE_HTML = """
             padding-left: 0.5em;
             padding-bottom: 0.4em;
 
-            top: 0.9em;
+            bottom: 0.6em;
             right: .6em;
         }
 
@@ -887,10 +889,10 @@ def dispwatched(sel, watched, display=True, template=None):
     """Display a watched episode string"""
     data = {
         "title": sel.title,
-        "season": padstr(watched.seasonnum, 1),
+        "season": padstr(watched.seasonnum, 2),
         "startep": padstr(watched.startep, 2),
         "finishep": padstr(watched.finishep, 2),
-        "date": watched.time.strftime("%a %d %b, %Y"),
+        "date": watched.time.strftime(DATE_FORMAT),
     }
 
     # Truncate series
