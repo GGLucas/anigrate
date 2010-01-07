@@ -46,6 +46,11 @@ COLOR = {
     "score_normal": "\033[0;37m",
     "score_low": "\033[0;31m",
     "score_critical": "\033[1;31m",
+
+    "stat_name": "\033[1;37m",
+    "stat_year": "\033[1;36m",
+    "stat_num": "\033[1;35m",
+    "stat_perc": "\033[1;34m",
 }
 
 DISPLAY_HEADER = \
@@ -64,6 +69,49 @@ DISPLAY_HIST_FOOTER = """ ----------------------------------------------------+-
 DISPLAY_LOG_HEADER = """%(line)s ..........................................+.........+........+........%(normal)s""" % COLOR
 DISPLAY_LOG = """  season %(season)s to ep %(finishep)s                       . %(date)s """
 DISPLAY_LOG_FOOTER = """%(line)s ..........................................+.........+........+........%(normal)s""" % COLOR
+
+DISPLAY_STATS = ("""
+ %(header)sStatistics%(normal)s
+ ==========
+
+ %(header)sBy Year%(normal)s
+ -----
+%%(years)s %(header)sBy Weekday%(normal)s
+ ----------
+"""+"\n".join(
+ (" %%(stat_name)s%(dayname)-12s %%(stat_num)s%%%%(day_%(dy)d_num)5s eps"+\
+  "    %%(stat_perc)s%%%%(day_%(dy)d_perc)5.1f%%%%%%%%") % {
+      "dy": dy,
+      "dayname": ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")[dy-1]
+ } for dy in range(1,8))+
+"""
+ 
+ %(header)sBy Hour%(normal)s
+ ----------
+"""+"\n".join(
+ (" %%(stat_name)s%(hr)02d.00-%(hrplus)02d.00  %%(stat_num)s%%%%(hour_%(hr)d_num)5s eps"+\
+  "    %%(stat_perc)s%%%%(hour_%(hr)d_perc)5.1f%%%%%%%%") % {
+    "hr": hr,
+    "hrplus": hr+1,
+ } for hr in range(0,24))+
+"""
+%(normal)s
+""") % COLOR
+
+DISPLAY_YEAR_STATS = (""" %(stat_year)s%%(year_num)s%(normal)s
+ ~~~~
+ %(stat_name)sEpisodes%(normal)s  %%(total_num)s
+ %(stat_name)sMinutes%(normal)s   %%(total_min)s min
+ %(stat_name)sDays%(normal)s      %%(total_day).3f days
+
+"""+"\n".join(
+ (" %%(stat_name)s%(mname)-12s %%(stat_num)s%%%%(month_%(m)d_num)5s eps"+\
+  "    %%(stat_perc)s%%%%(month_%(m)d_perc)5.1f%%%%%%%%") % {
+      "m": m,
+      "mname": ("January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November",
+                "December")[m-1]
+ } for m in range(1,13))+"\n\n")% COLOR
 # }}}
 
 # {{{ Help
@@ -148,6 +196,12 @@ Commands:
         Set season with number <num> as the active season. Can be a relative 
         offset like +1 or -2.
 
+    stats: [selector]
+        Show a list of various statistics about the times and dates episodes
+        of series matching [selector] have been watched. If no selector is
+        given, show statistics about all series.
+
+
     match: [selector]
         Output a simple no-nonsense list of series matched by [selector],
         useful for piping into other binaries. If no selector is given, match
@@ -162,6 +216,7 @@ Commands:
             title\tcurrent_episode\ttotal_episodes\tcurrent_season\trating
 
         ie. each item is separated by a tab character for easy parsing.
+
 
     runserver [type] [host] [port]
         Run a server displaying an html public list on [host] (default: localhost)
@@ -244,7 +299,7 @@ Examples:
     anigrate season add: Mushishi
         Add a new season to series "Mushishi".
 
-    anigrate s act 1: Mushishi
+    anigrate se act 1: Mushishi
         Set season "1" as the active season on series "Mushishi".
 
     anigrate length 26: Mushishi
@@ -607,6 +662,7 @@ LOG_HTML = """<tr><td>season <strong>%(season)s</strong> to ep <strong>%(episode
 Base = declarative_base()
 Session = sessionmaker()
 
+# {{{ Series
 class Series(Base):
     """An entire series."""
     __tablename__ = "series"
@@ -663,7 +719,9 @@ class Series(Base):
             self.seasontotal += 1
 
         return self.finished
+# }}}
 
+# {{{ Season
 class Season(Base):
     """One season of a series."""
     __tablename__ = "seasons"
@@ -675,7 +733,9 @@ class Season(Base):
 
     episode_total = Column(Integer, default=0)
     current_watched = Column(Integer, default=0)
+# }}}
 
+# {{{ Watched
 class Watched(Base):
     """A 'watched episodes' event attached to a season."""
     __tablename__ = "watched"
@@ -692,6 +752,7 @@ class Watched(Base):
 
     startep = Column(Integer)
     finishep = Column(Integer)
+# }}}
 # }}}
 
 # {{{ Utility functions
@@ -871,13 +932,81 @@ def gettime(selection):
 def getstats(session, selection):
     """ Get a dictionary with various statistics. """
     stats = {
-        "count": len(selection),
-        "total": 0,
+        "count": selection.count(),
         "year": {},
-        "month": {},
-        "weekday": {},
-        "hour": {},
     }
+
+    # Make sure the selection is loaded
+    sel = [selection.all()]
+
+    # Create watched query
+    if selection:
+        seltable = selection.subquery()
+        q = session.query(Watched).join((seltable, Watched.series_id == seltable.c.id))
+    else:
+        q = session.query(Watched)
+
+    # Fill dictionary
+    def fill(amn, time, key, dt):
+        if key+"_num" not in dt:
+            dt[key+"_num"] = 0
+            dt[key+"_min"] = 0
+            dt[key+"_day"] = 0
+
+        dt[key+"_num"] += amn
+        dt[key+"_min"] += time
+        dt[key+"_day"] += time/float(1440)
+
+    [fill(0, 0, "day_"+str(i), stats) for i in range(1,7)]
+    [fill(0, 0, "month_"+str(i), stats) for i in range(1,13)]
+    [fill(0, 0, "hour_"+str(i), stats) for i in range(0,24)]
+
+    # Gather stats
+    for watched in q.all():
+        amn = watched.finishep - watched.startep
+        time = session.query(Series).get(watched.series_id).duration * amn
+
+        if amn == 0:
+            print(watched.series.title, watched.time, watched.finishep, watched.startep)
+
+        if watched.time.year not in stats['year']:
+            stats['year'][watched.time.year] = {}
+            stats['year'][watched.time.year]['year'] = watched.time.year
+
+        # Year specific totals
+        fill(amn, time, "total", stats['year'][watched.time.year])
+        fill(amn, time, "month_"+str(watched.time.month), stats['year'][watched.time.year])
+
+        # Global totals
+        fill(amn, time, "total", stats)
+        fill(amn, time, "day_"+watched.time.strftime("%u").lower(), stats)
+        fill(amn, time, "hour_"+str(watched.time.hour), stats)
+        fill(amn, time, "month_"+str(watched.time.month), stats)
+
+    # Gather percentages
+    percs = {}
+
+    # Totals
+    for nm in stats:
+        if not nm.startswith("total") and nm.endswith("_min"):
+            perc = "_".join(nm.split("_")[:-1])+"_perc"
+            percs[perc] = stats[nm]/float(stats["total_min"])*100
+    stats.update(percs)
+
+    for yr in stats['year']:
+        yearpercs = {}
+
+        for i in range(1,13):
+            if "month_"+str(i)+"_num" not in stats['year'][yr]:
+                stats['year'][yr]["month_"+str(i)+"_num"] = 0
+                stats['year'][yr]["month_"+str(i)+"_min"] = 0
+                stats['year'][yr]["month_"+str(i)+"_day"] = 0
+
+        for nm in stats['year'][yr]:
+            if not nm.startswith("total") and nm.endswith("_min"):
+                perc = "_".join(nm.split("_")[:-1])+"_perc"
+                yearpercs[perc] = stats['year'][yr][nm]/float(stats['year'][yr]["total_min"])*100
+        stats['year'][yr].update(yearpercs)
 
     return stats
 # }}}
@@ -1893,14 +2022,14 @@ def hist(arg, selector):
     # Bind database
     session = dbbind()
 
-    # Category
+    # Number of entries
     if arg:
         try:
             num = int(arg[0])
         except:
             return "Error: history amount is not a valid number."
     else:
-        num = 15
+        num = 20
 
     # Build query
     q = session.query(Watched)
@@ -1925,6 +2054,32 @@ def hist(arg, selector):
 
     # Display footer
     print(DISPLAY_HIST_FOOTER)
+# }}}
+
+# {{{ stats
+@command()
+def stats(arg, selector):
+    """Display statistics."""
+    # Bind database
+    session = dbbind()
+
+    # Build query
+    q = session.query(Watched)
+
+    # Selection
+    selection = getselection(session, selector, list=False)
+
+    # Get statistics
+    stats = getstats(session, selection)
+    stats['year_num'] = "All"
+    stats['years'] = DISPLAY_YEAR_STATS % stats
+
+    for year in stats['year']:
+        stats['year'][year]['year_num'] = year
+        stats['years'] += DISPLAY_YEAR_STATS % stats['year'][year]
+
+    # Print statistics
+    print(DISPLAY_STATS%stats)
 # }}}
 
 # {{{ log
