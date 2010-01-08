@@ -4,6 +4,9 @@ import os
 import datetime
 import time
 
+import gzip
+import StringIO
+
 from ConfigParser import ConfigParser
 from urllib2 import quote, unquote
 
@@ -11,6 +14,13 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, c
 from sqlalchemy.orm import sessionmaker, relation
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import and_, or_, not_
+
+# Try to get flup
+try:
+    import flup
+    HAVE_FLUP = True
+except:
+    HAVE_FLUP = False
 
 # {{{ Constants
 Config = None
@@ -24,6 +34,7 @@ CONF_LOCATION = CONF_DIR+"/config"
 
 DEFAULT_TITLE_LIST = "Watch List"
 DEFAULT_TITLE_LOG = "Watch Log"
+DEFAULT_TITLE_STATS = "Watch Stats"
 DEFAULT_LINK = "http://en.wikipedia.org/wiki/Special:Search?search=%s"
 
 DATE_FORMAT = "%a %d %b, %Y . %H:%M"
@@ -314,6 +325,7 @@ License WTFPL: <http://sam.zoy.org/wtfpl>"""
 # }}}
 
 # {{{ Weblist HTML
+# {{{ List page
 PAGE_HTML = """
 <!DOCTYPE html>
 
@@ -337,6 +349,11 @@ PAGE_HTML = """
         #header > span {
             display: block;
             text-align: center;
+            font-size: 0.8em;
+        }
+
+        #header a:link, #header a:visited {
+            text-decoration: none;
         }
 
         #gentime {
@@ -484,6 +501,7 @@ PAGE_HTML = """
     <div id='header'>
       <h1>%(title)s</h1>
       <h2>%(selector)s</h2>
+      <span><a href="%(uri)s/stats/%(urlselector)s">(statistics)</a></span>
       <span>%(numseries)d total. %(time_days).1f days</span>
     </div>
 
@@ -548,7 +566,9 @@ PAGE_HTML = """
 SERIES_HTML = """<li class="r_%(rate)d d_%(dropped)d f_%(finished)d"><a href="%(link)s">%(title)s</a><a href="%(loglink)s">S%(season)d %(watched)s/%(total)s</a></li>"""
 
 CATEGORY_HTML = """<li><a href="%(link)s">%(title)s</a></li>"""
+# }}}
 
+# {{{ Log Page
 LOG_PAGE_HTML = """
 <!DOCTYPE html>
 
@@ -567,6 +587,16 @@ LOG_PAGE_HTML = """
         #header > h1, #header > h2 {
             margin: 0;
             text-align: center;
+        }
+
+        #header > span {
+            display: block;
+            text-align: center;
+            font-size: 0.8em;
+        }
+
+        #header a:link, #header a:visited {
+            text-decoration: none;
         }
 
         #info {
@@ -632,6 +662,7 @@ LOG_PAGE_HTML = """
     <div id="header">
       <h1>%(title)s</h1>
       <h2>%(series_title)s</h2>
+      <span><a href="%(uri)s/stats/%(urlselector)s">(statistics)</a></span>
     </div>
 
     <div id="info" class="dropped_%(dropped)d finished_%(finished)d">
@@ -655,6 +686,159 @@ LOG_PAGE_HTML = """
 """
 
 LOG_HTML = """<tr><td>season <strong>%(season)s</strong> to ep <strong>%(episode)s</strong></td> <td>%(date)s</td></tr>"""
+
+# }}}
+
+# {{{ Stats page
+STATS_PAGE_HTML = """
+<!DOCTYPE html>
+
+<html lang='en-GB'>
+  <head>
+    <title>%(title)s: %(selector)s</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <style type='text/css'>
+        body {
+            font-family: sans-serif; 
+            background: white;
+            color: black;
+        }
+
+        #header > h1, #header > h2 {
+            margin: 0;
+            text-align: center;
+        }
+
+        #gentime {
+            font-size: 0.6em;
+            padding-top: 2em;
+            text-align: center;
+        }
+
+        div.year {
+            float: left;
+            width: 50%%;
+            padding-bottom: 1em;
+        }
+
+        div#weekdays {
+            padding-bottom: 1.3em;
+        }
+
+        div#hours {
+            clear: both;
+        }
+
+        div.year strong {
+            clear: left;
+            min-width: 30%%;
+        }
+
+        h3 {
+            margin: 0;
+        }
+
+        div.year strong, div.year span {
+            float: left;
+            display: block;
+            font-size: .7em;
+        }
+
+        table {
+            width: 100%%;
+            clear: both;
+            padding-right: 0.5em;
+        }
+
+        tr.stat:nth-child(even) {
+            background: #f7f7f7;
+        }
+
+        tr.stat:nth-child(odd) {
+            background: #e7e7e7;
+        }
+
+        td {
+            padding: .3em;
+        }
+
+        td:last-child {
+            width: 50%%;
+            padding: 0;
+        }
+
+        tr.stat:nth-child(even) td:last-child > div {
+            background: #99ff80;
+            padding: .3em;
+        }
+
+        tr.stat:nth-child(odd) td:last-child > div {
+            background: #ffe680;
+            padding: .3em;
+        }
+    </style>
+  </head>
+  <body>
+    <div id='header'>
+      <h1>%(title)s</h1>
+      <h2>%(selector)s</h2>
+    </div>
+
+    <div id='weekdays'>
+    <h3>Weekdays</h3>
+    <table>
+    """+"\n".join((" <tr class='stat' title='%(dayname)s: %%(day_%(dy)d_num)s eps, %%(day_%(dy)d_min)s minutes, %%(day_%(dy)d_day).3f days.'>"+\
+     "<td>%(dayname)s</td> <td>%%(day_%(dy)d_num)5s eps</td>"+\
+     " <td><div style='width: %%(day_%(dy)d_perc)s%%%%'>%%(day_%(dy)d_perc)5.1f%%%%</div></td>") % {
+          "dy": dy,
+          "dayname": ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")[dy-1]
+     } for dy in range(1,8))+"""
+     </table>
+    </div>
+
+    <div id='years'>
+        %(years)s
+    </div>
+     
+    <div id='hours'>
+    <h3>Hours</h3>
+    <table>
+    """+"\n".join((" <tr class='stat' title='%(hr)02d.00-%(hrplus)02d.00: %%(hour_%(hr)d_num)s eps, %%(hour_%(hr)d_min)s minutes, %%(hour_%(hr)d_day).3f days.'>"+\
+     "<td>%(hr)02d.00-%(hrplus)02d.00</td> <td>%%(hour_%(hr)d_num)5s eps</td>"+\
+     " <td><div style='width: %%(hour_%(hr)d_perc)s%%%%'>%%(hour_%(hr)d_perc)5.1f%%%%</div></td>") % {
+        "hr": hr,
+        "hrplus": hr+1,
+     } for hr in range(0,24))+"""
+    </table>
+    </div>
+
+    <div id="gentime">page generated by <a href='"""+ANIGRATE_URI+"""'>anigrate v"""+str(ANIGRATE_VERSION)+"""</a> in {{GENTIME}}s</div>
+  </body>
+</html>
+"""
+
+YEAR_HTML = """
+<div class="year" id="year_%(year_num)s">
+<h3>%(year_num)s</h3>
+<strong>Total Episodes</strong> <span>%(total_num)s eps</span>
+<strong>Total Minutes</strong> <span>%(total_min)s min</span>
+<strong>Total Days</strong> <span>%(total_day).3f days</span>
+
+<table>
+"""+"\n".join(
+(" <tr class='stat' title='%(mname)s %%(year_num)s: %%(month_%(m)d_num)s eps, %%(month_%(m)d_min)s minutes, %%(month_%(m)d_day).3f days.'>"+\
+     "<td>%(mname)s</td> <td>%%(month_%(m)d_num)5s eps</td>"+\
+     " <td><div style='width: %%(month_%(m)d_perc)s%%%%'>%%(month_%(m)d_perc)5.1f%%%%</div></td>") % {
+      "m": m,
+      "mname": ("January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November",
+                "December")[m-1]
+ } for m in range(1,13))+ """
+</table>
+</div>
+"""
+# }}}
 
 # }}}
 
@@ -957,7 +1141,7 @@ def getstats(session, selection):
         dt[key+"_min"] += time
         dt[key+"_day"] += time/float(1440)
 
-    [fill(0, 0, "day_"+str(i), stats) for i in range(1,7)]
+    [fill(0, 0, "day_"+str(i), stats) for i in range(1,8)]
     [fill(0, 0, "month_"+str(i), stats) for i in range(1,13)]
     [fill(0, 0, "hour_"+str(i), stats) for i in range(0,24)]
 
@@ -1123,16 +1307,6 @@ def dispwatched(sel, watched, display=True, template=None):
 # }}}
 
 # {{{ Weblist
-# Try to get flup
-try:
-    import flup
-    HAVE_FLUP = True
-except:
-    HAVE_FLUP = False
-
-import gzip
-import StringIO
-
 # {{{ WSGI Application
 def application(environ, start_response):
     # Save time
@@ -1140,16 +1314,27 @@ def application(environ, start_response):
 
     if environ.has_key("SCRIPT_NAME") and environ.get("SCRIPT_NAME"):
         # Use request URI
-        uri = unquote(environ.get("REQUEST_URI", "")).lstrip("/")
+        uri = unquote(environ.get("REQUEST_URI", ""))
 
         # Strip script name
-        uri = uri[len(environ.get("SCRIPT_NAME", ""))-1:]
+        uri = uri[len(environ.get("SCRIPT_NAME", "")):]
 
         # Strip query args
-        uri = uri.split("?")[0]
+        uri = uri.split("?")[0].lstrip("/")
     else:
         # Use PATH_INFO
         uri = environ.get("PATH_INFO").lstrip("/")
+
+    # Get selector
+    selector = uri.strip("/").split("/")
+
+    # Empty selector
+    if not selector or selector == ['']:
+        selector = []
+
+    # Uri sanity checks
+    if not uri: uri = '/'
+    elif uri[-1] != "/": uri += "/"
 
     # Connect to db
     session = dbbind()
@@ -1158,7 +1343,7 @@ def application(environ, start_response):
     if uri.startswith("log/"):
         # {{{ Log page
         # Remove log argument
-        selector = [" ".join(uri.split("/")[1:])]
+        selector = selector[1:]
 
         # Match exact by default
         if not [x for x in selector if x.startswith("%")]:
@@ -1178,6 +1363,7 @@ def application(environ, start_response):
                 "title": Config.get("weblist","title_log") if Config.has_option("weblist","title_log") else DEFAULT_TITLE_LOG,
                 "series_title": series.title,
                 "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
+                "urlselector": "%25exact/"+series.title,
 
                 "seasons": len(series.seasons),
                 "current": str(series.current),
@@ -1204,15 +1390,37 @@ def application(environ, start_response):
             # Generate page
             data = LOG_PAGE_HTML % data
         # }}}
+    elif uri.startswith("stats/"):
+        # {{{ Stats page
+        # Remove stats argument
+        selector = selector[1:]
+        selname = " ".join(selector) if selector else "All Series"
+
+        # Get selection
+        selection = getselection(session, selector, list=False)
+
+        # Page data dictionary
+        data = {
+            "title": Config.get("weblist","title_stats") if Config.has_option("weblist","title_stats") else DEFAULT_TITLE_STATS,
+            "selector": selname,
+            "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
+        }
+
+        # Get statistics
+        data.update(getstats(session, selection))
+        data['year_num'] = "All Years"
+        data['years'] = YEAR_HTML % data
+
+        for year in data['year']:
+            data['year'][year]['year_num'] = year
+            data['years'] += YEAR_HTML % data['year'][year]
+
+        # Generate page
+        data = STATS_PAGE_HTML % data
+        # }}}
     else:
         # {{{ List page
-        # Split into selector arguments
-        selector = uri.split("/")
-
-        ## Handle empty selectors
-        if not selector or selector == ['']:
-            selector = []
-
+        # Default selector
         if not selector and Config.has_option("weblist", "default"):
             selector = Config.get("weblist", "default").split()
 
@@ -1220,6 +1428,7 @@ def application(environ, start_response):
         data = {
             "series": "",
             "seriestime": 1.56,
+            "urlselector": "/".join(selector),
             "selector": " ".join(selector) if selector else "All Series",
             "title": Config.get("weblist","title_list") if Config.has_option("weblist","title_list") else DEFAULT_TITLE_LIST,
             "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),

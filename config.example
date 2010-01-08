@@ -12,6 +12,8 @@
 title_list=Watch List
 ## Title displayed for log pages
 title_log=Watch Log
+## Title displayed for stats pages
+title_stats=Watch Stats
 ## Default selector to display
 default=@title
 
