@@ -1387,11 +1387,7 @@ def application(environ, start_response):
     if uri.startswith("log/"):
         # {{{ Log page
         # Remove log argument
-        selector = selector[1:]
-
-        # Match exact by default
-        if not [x for x in selector if x.startswith("%")]:
-            selector.append("%e")
+        selector = ["%exact", "/".join(selector[1:])]
 
         # Get selection
         selection = getselection(session, selector)
