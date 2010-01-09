@@ -501,7 +501,10 @@ PAGE_HTML = """
     <div id='header'>
       <h1>%(title)s</h1>
       <h2>%(selector)s</h2>
-      <span><a href="%(uri)s/stats/%(urlselector)s">(statistics)</a></span>
+      <span>
+        <a href="%(uri)s/hist/%(urlselector)s">(history)</a>
+        <a href="%(uri)s/stats/%(urlselector)s">(statistics)</a>
+      </span>
       <span>%(numseries)d total. %(time_days).1f days</span>
     </div>
 
@@ -574,7 +577,7 @@ LOG_PAGE_HTML = """
 
 <html lang='en-GB'>
   <head>
-  <title>%(title)s: %(series_title)s</title>
+  <title>%(title)s: %(selector)s</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
     <style type='text/css'>
@@ -656,23 +659,35 @@ LOG_PAGE_HTML = """
             padding-top: 1em;
             text-align: center;
         }
+
+        td.f_0 { font-weight: bold; }
+        td.d_1 { color: #cc3030; }
+
+        td.r_10  { background: #80ff80; }
+        td.r_9   { background: #99ff80; }
+        td.r_8   { background: #b3ff80; }
+        td.r_7   { background: #ccff80; }
+        td.r_6   { background: #e6ff80; }
+        td.r_5   { background: #ffff80; }
+        td.r_4   { background: #ffe680; }
+        td.r_3   { background: #ffcc80; }
+        td.r_2   { background: #ffb380; }
+        td.r_1   { background: #ff9980; }
+
+        td.series { width: 40%%; }
     </style>
   </head>
   <body>
     <div id="header">
       <h1>%(title)s</h1>
-      <h2>%(series_title)s</h2>
-      <span><a href="%(uri)s/stats/%(urlselector)s">(statistics)</a></span>
+      <h2>%(selector)s</h2>
+      <span>
+          <a href="%(uri)s/%(urlselector_list)s">(list)</a>
+          <a href="%(uri)s/stats/%(urlselector)s">(statistics)</a>
+      </span>
     </div>
 
-    <div id="info" class="dropped_%(dropped)d finished_%(finished)d">
-        <ul>
-            <li><span>Latest</span> <span>S%(current)s %(watched)s/%(total)s</span></li>
-            <li><span>Seasons</span> <span>%(seasons)s</span></li>
-            <li><span>Duration</span> <span>%(duration)s min/ep</span></li>
-            <li><span>Rating</span> <span>%(rating)s</span></li>
-        </ul>
-    </div>
+    %(info)s
 
     <div id="log">
         <table>
@@ -685,7 +700,21 @@ LOG_PAGE_HTML = """
 </html>
 """
 
+INFO_HTML = """
+    <div id="info" class="dropped_%(dropped)d finished_%(finished)d">
+        <ul>
+            <li><span>Latest</span> <span>S%(current)s %(watched)s/%(total)s</span></li>
+            <li><span>Seasons</span> <span>%(seasons)s</span></li>
+            <li><span>Duration</span> <span>%(duration)s min/ep</span></li>
+            <li><span>Rating</span> <span>%(rating)s</span></li>
+        </ul>
+    </div>
+"""
+
+
 LOG_HTML = """<tr><td>season <strong>%(season)s</strong> to ep <strong>%(episode)s</strong></td> <td>%(date)s</td></tr>"""
+
+HIST_HTML = """<tr><td class="r_%(rating)d f_%(finished)d d_%(dropped)d series">%(series)s</td><td>season <strong>%(season)s</strong> to ep <strong>%(episode)s</strong></td> <td>%(date)s</td></tr>"""
 
 # }}}
 
@@ -708,6 +737,16 @@ STATS_PAGE_HTML = """
         #header > h1, #header > h2 {
             margin: 0;
             text-align: center;
+        }
+
+        #header > span {
+            display: block;
+            text-align: center;
+            font-size: 0.8em;
+        }
+
+        #header a:link, #header a:visited {
+            text-decoration: none;
         }
 
         #gentime {
@@ -783,6 +822,10 @@ STATS_PAGE_HTML = """
     <div id='header'>
       <h1>%(title)s</h1>
       <h2>%(selector)s</h2>
+      <span>
+        <a href="%(uri)s/%(urlselector)s">(list)</a>
+        <a href="%(uri)s/hist/%(urlselector)s">(history)</a>
+      </span>
     </div>
 
     <div id='weekdays'>
@@ -1018,6 +1061,7 @@ def dbbind():
 def getselection(session, selector, list=True):
     """Get all anime matching a selector"""
     q = session.query(Series)
+    selector = selector[:]
     mode = "prefix"
     sort = False
 
@@ -1357,14 +1401,18 @@ def application(environ, start_response):
             data = "Error: series matching selector not found."
         else:
             series = selection[0]
-
-            # Page data dictionary
             data = {
-                "title": Config.get("weblist","title_log") if Config.has_option("weblist","title_log") else DEFAULT_TITLE_LOG,
-                "series_title": series.title,
+                "title": Config.get("weblist","title_log") \
+                        if Config.has_option("weblist","title_log") \
+                        else DEFAULT_TITLE_LOG,
                 "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
-                "urlselector": "%25exact/"+series.title,
+                "selector": series.title,
+                "urlselector": quote("%exact/"+series.title),
+                "urlselector_list": quote("="+series.category),
+                "log": "",
+            }
 
+            data['info'] = INFO_HTML % {
                 "seasons": len(series.seasons),
                 "current": str(series.current),
                 "watched": str(series.epscurrent),
@@ -1375,12 +1423,12 @@ def application(environ, start_response):
                 "finished": series.finished,
             }
 
+            
             # Get watch log
-            data['log'] = ''
-
             for watch in session.query(Watched).filter(
-                    Watched.series == series
-            ).order_by(Watched.time.desc(), Watched.seasonnum.desc(), Watched.finishep.desc()):
+                Watched.series == series
+            ).order_by(Watched.time.desc(), Watched.seasonnum.desc(),
+                       Watched.finishep.desc()):
                 data['log'] += LOG_HTML % {
                     "season": watch.seasonnum,
                     "episode": watch.finishep,
@@ -1389,6 +1437,49 @@ def application(environ, start_response):
 
             # Generate page
             data = LOG_PAGE_HTML % data
+    elif uri.startswith("hist/"):
+        # Remove hist argument
+        selector = selector[1:]
+
+        # Get selection
+        selection = getselection(session, selector, list=False)
+        data = {
+            "title": Config.get("weblist","title_log") \
+                    if Config.has_option("weblist","title_log") \
+                    else DEFAULT_TITLE_LOG,
+            "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
+            "log": "",
+            "info": "",
+            
+            "selector": (" ".join(selector) if selector else "All Series")\
+                            .replace(" %e", ""),
+            "urlselector": quote("/".join(selector)),
+            "urlselector_list": quote("/".join(selector)),
+        }
+
+        limit = Config.get("weblist","history_size") if \
+                Config.has_option("weblist","history_size") else \
+                30
+
+        selection = selection.subquery()
+
+        for watch, series in session.query(Watched, Series).join(
+                (selection, Watched.series_id == selection.c.id)
+            ).filter(Series.id == Watched.series_id).order_by(
+                Watched.time.desc()
+            ).limit(limit):
+            data['log'] += HIST_HTML % {
+                "series": series.title,
+                "rating": series.rating,
+                "finished": series.finished,
+                "dropped": series.dropped,
+                "season": watch.seasonnum,
+                "episode": watch.finishep,
+                "date": watch.time.strftime(DATE_FORMAT_HTML),
+            }
+
+        # Generate page
+        data = LOG_PAGE_HTML % data
         # }}}
     elif uri.startswith("stats/"):
         # {{{ Stats page
@@ -1403,6 +1494,7 @@ def application(environ, start_response):
         data = {
             "title": Config.get("weblist","title_stats") if Config.has_option("weblist","title_stats") else DEFAULT_TITLE_STATS,
             "selector": selname,
+            "urlselector": quote("/".join(selector)),
             "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
         }
 
@@ -1428,7 +1520,7 @@ def application(environ, start_response):
         data = {
             "series": "",
             "seriestime": 1.56,
-            "urlselector": "/".join(selector),
+            "urlselector": quote("/".join(selector)),
             "selector": " ".join(selector) if selector else "All Series",
             "title": Config.get("weblist","title_list") if Config.has_option("weblist","title_list") else DEFAULT_TITLE_LIST,
             "uri": environ.get("SCRIPT_NAME", "/").rstrip("/"),
@@ -2241,7 +2333,7 @@ def hist(arg, selector):
         num = 20
 
     # Build query
-    q = session.query(Watched)
+    q = session.query(Watched, Series)
 
     # Selection
     if selector:
@@ -2249,6 +2341,7 @@ def hist(arg, selector):
         q = q.join((selection, Watched.series_id == selection.c.id))
     
     # Sort
+    q = q.filter(Series.id == Watched.series_id)
     q = q.order_by(Watched.time.desc())
 
     # Limit
@@ -2258,8 +2351,8 @@ def hist(arg, selector):
     # Display header
     print(DISPLAY_HIST_HEADER)
 
-    for watch in q.all():
-        dispwatched(watch.series, watch)
+    for watch, series in q.all():
+        dispwatched(series, watch)
 
     # Display footer
     print(DISPLAY_HIST_FOOTER)
