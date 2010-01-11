@@ -236,8 +236,8 @@ Commands:
         flup is installed, you can additionally specify [type] to be "fcgi", 
         "scgi" or "ajp" and it will host a server with that protocol.
 
-        Note that the main anigrate binary can also be used as through mod_wsgi
-        as a wsgi script and it will display the same html public list.
+        Note that the main anigrate binary can also be used as a wsgi script 
+        and it will display the same html public list.
 
         You can specify any selector to display a list for in the address by 
         separating the terms with slashes. For example:
