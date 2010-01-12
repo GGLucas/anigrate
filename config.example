@@ -1,4 +1,7 @@
-## Put this in ~/.anigrate/config
+### Put this in ~/.anigrate/config for a global configuration.
+## Can also be put in the same directory the anigrate binary is
+## called from as "anigraterc". This facilitates using specific
+## configuration for running it through wsgi or as a server.
 
 # Database location examples
 [database]
@@ -9,13 +12,13 @@
 # Weblist configuration
 [weblist]
 ## Title displayed for list pages
-title_list=Watch List
+#title_list=Watch List
 ## Title displayed for log pages
-title_log=Watch Log
+#title_log=Watch Log
 ## Title displayed for stats pages
-title_stats=Watch Stats
+#title_stats=Watch Stats
 ## Default selector to display
-default=@title
+#default=@title
 
 # Links opened for series, by category
 [link]
@@ -25,3 +28,36 @@ default=http://en.wikipedia.org/wiki/Special:Search?search=%s
 anime=http://myanimelist.net/anime.php?q=%s
 ## If category=tv, open tv.com
 tv=http://www.tv.com/search.php?qs=%s
+
+# Appearance configuration
+[appearance]
+## Whether colors are enabled at all
+#color_enabled=yes
+## Whether to use box-drawing unicode glyphs or ascii
+#unicode_enabled=yes
+
+# Colors used by the commandline 
+[color]
+## General colors
+#normal=
+#unknown=bold,magenta
+#header=bold,yellow
+#log_line=bold,black
+## Series titles color in list
+#series_normal=bold,cyan
+#series_watching=bold,blue
+#series_dropped=bold,red
+## Watch log colors
+#seasonnum=bold,magenta
+#epcount=bold,blue
+## Score colors
+#score_top=bold,green
+#score_high=green
+#score_normal=white
+#score_low=red
+#score_critical=bold,red # 1-4
+## Stat colors
+#stat_name=bold,white
+#stat_year=bold,cyan
+#stat_num=bold,magenta
+#stat_perc=bold,blue

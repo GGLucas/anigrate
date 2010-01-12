@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 import sys
 import os
 import datetime
@@ -23,28 +24,31 @@ except:
     HAVE_FLUP = False
 
 # {{{ Constants
-Config = None
-
+## Application info
 ANIGRATE_URI = "http://anigrate.glacicle.org"
 ANIGRATE_VERSION = 1.0
 
+## Places
 CONF_DIR = os.getenv("HOME")+"/.anigrate"
 DB_LOCATION = CONF_DIR+"/db"
 CONF_LOCATION = CONF_DIR+"/config"
 
+## Default weblink titles
 DEFAULT_TITLE_LIST = "Watch List"
 DEFAULT_TITLE_LOG = "Watch Log"
 DEFAULT_TITLE_STATS = "Watch Stats"
 DEFAULT_LINK = "http://en.wikipedia.org/wiki/Special:Search?search=%s"
 
-DATE_FORMAT = "%a %d %b, %Y . %H:%M"
+## Date formats
+DATE_FORMAT = "%a %d %b, %Y {LINE} %H:%M"
 DATE_FORMAT_HTML = "%a %d %b, %Y %H:%M"
 
+## Default colors
 COLOR = {
     "normal": "\033[0m",
     "unknown": "\033[1;35m",
     "header": "\033[1;33m",
-    "line": "\033[1;30m",
+    "log_line": "\033[1;30m",
 
     "series_normal": "\033[1;36m",
     "series_watching": "\033[1;34m",
@@ -64,22 +68,77 @@ COLOR = {
     "stat_perc": "\033[1;34m",
 }
 
-DISPLAY_HEADER = \
-"""\n  %(header)sSeries%(normal)s                                   | %(header)sWatched%(normal)s | %(header)sSeason%(normal)s | %(header)sRating%(normal)s """ % COLOR+\
-"""\n ------------------------------------------+---------+--------+--------"""
+## Color names
+COLORS_AVAILABLE = ["black", "red", "green", "yellow", 
+                    "blue", "magenta", "cyan", "white",]
 
-DISPLAY_FOOTER = """                                           |         |        |        \n  %d series displayed.\n"""
+## Parse configuration
+Config = ConfigParser()
+Config.read([CONF_LOCATION,os.path.join(os.getcwd(), "anigraterc")])
 
-DISPLAY_SERIES = """  %(title)s | %(epscurrent)s/%(epstotal)s | %(current)s | %(rating)s """
+## Load color configuration
+if Config.has_option("appearance", "color_enabled") and \
+   Config.get("appearance", "color_enabled") != "yes":
+    for nm in COLOR:
+        COLOR[nm] = ""
+else:
+    for nm in COLOR:
+        if Config.has_option("color", nm):
+            text = Config.get("color", nm)
+            prop = 0
+            col = 0
 
-DISPLAY_WATCHED = """  %(title)s season %(season)s to ep %(finishep)s | %(date)s """
+            for entry in text.split(","):
+                if entry == "bold":
+                    prop = 1
+                elif entry in COLORS_AVAILABLE:
+                    col = 30+COLORS_AVAILABLE.index(entry)
 
-DISPLAY_HIST_HEADER = """\n  %(header)sHistory%(normal)s\n ----------------------------------------------------+------------------+-------""" % COLOR
-DISPLAY_HIST_FOOTER = """ ----------------------------------------------------+------------------+-------\n"""
+            if col == 0:
+                COLOR[nm] = "\033[0m"
+            else:
+                COLOR[nm] = "\033[%d;%dm" % (prop, col)
 
-DISPLAY_LOG_HEADER = """%(line)s ..........................................+.........+........+........%(normal)s""" % COLOR
-DISPLAY_LOG = """  season %(season)s to ep %(finishep)s                       . %(date)s """
-DISPLAY_LOG_FOOTER = """%(line)s ..........................................+.........+........+........%(normal)s""" % COLOR
+## Templates for commandline
+if Config.has_option("appearance", "unicode_enabled") and \
+   Config.get("appearance", "unicode_enabled") != "yes":
+    DATE_FORMAT = DATE_FORMAT.replace("{LINE}", "%(log_line)s.%(normal)s"%COLOR)
+
+    DISPLAY_HEADER = \
+    """\n  %(header)sSeries%(normal)s                                   | %(header)sWatched%(normal)s | %(header)sSeason%(normal)s | %(header)sRating%(normal)s """ % COLOR+\
+    """\n ------------------------------------------+---------+--------+--------"""
+
+    DISPLAY_FOOTER = """                                           |         |        |        \n  %d series displayed.\n"""
+
+    DISPLAY_SERIES = """  %(title)s | %(epscurrent)s/%(epstotal)s | %(current)s | %(rating)s """
+
+    DISPLAY_WATCHED = """  %(title)s season %(season)s to ep %(finishep)s | %(date)s """
+
+    DISPLAY_HIST_HEADER = """\n  %(header)sHistory%(normal)s\n ----------------------------------------------------+------------------+-------""" % COLOR
+    DISPLAY_HIST_FOOTER = """ ----------------------------------------------------+------------------+-------\n"""
+
+    DISPLAY_LOG_HEADER = """%(log_line)s ..........................................+.........+........+........%(normal)s""" % COLOR
+    DISPLAY_LOG = """  season %%(season)s to ep %%(finishep)s                       %(log_line)s|%(normal)s %%(date)s """ % COLOR
+    DISPLAY_LOG_FOOTER = """%(log_line)s ..........................................+.........+........+........%(normal)s""" % COLOR
+else:
+    DATE_FORMAT = DATE_FORMAT.replace("{LINE}", "%(log_line)s│%(normal)s"%COLOR)
+
+    DISPLAY_HEADER = \
+    """\n  %(header)sSeries%(normal)s                                   │ %(header)sWatched%(normal)s │ %(header)sSeason%(normal)s │ %(header)sRating%(normal)s """ % COLOR+\
+    """\n ──────────────────────────────────────────┼─────────┼────────┼────────"""
+
+    DISPLAY_FOOTER = """                                           │         │        │        \n  %d series displayed.\n"""
+
+    DISPLAY_SERIES = """  %(title)s │ %(epscurrent)s/%(epstotal)s │ %(current)s │ %(rating)s """
+
+    DISPLAY_WATCHED = """  %(title)s season %(season)s to ep %(finishep)s │ %(date)s """
+
+    DISPLAY_HIST_HEADER = """\n  %(header)sHistory%(normal)s\n ────────────────────────────────────────────────────┬──────────────────┬───────""" % COLOR
+    DISPLAY_HIST_FOOTER = """ ────────────────────────────────────────────────────┴──────────────────┴───────\n"""
+
+    DISPLAY_LOG_HEADER = """%(log_line)s ──────────────────────────────────────────┼─────────┬────────┼────────%(normal)s""" % COLOR
+    DISPLAY_LOG = """  season %%(season)s to ep %%(finishep)s                       %(log_line)s│%(normal)s %%(date)s """ % COLOR
+    DISPLAY_LOG_FOOTER = """%(log_line)s ──────────────────────────────────────────┼─────────┴────────┼────────%(normal)s""" % COLOR
 
 DISPLAY_STATS = ("""
  %(header)sStatistics%(normal)s
@@ -98,7 +157,7 @@ DISPLAY_STATS = ("""
 """
  
  %(header)sBy Hour%(normal)s
- ----------
+ -------
 """+"\n".join(
  (" %%(stat_name)s%(hr)02d.00-%(hrplus)02d.00  %%(stat_num)s%%%%(hour_%(hr)d_num)5s eps"+\
   "    %%(stat_perc)s%%%%(hour_%(hr)d_perc)5.1f%%%%%%%%") % {
@@ -1041,10 +1100,6 @@ def dbbind():
     """Bind the sqlalchemy database engine and return the session."""
     # Try to read config
     if not hasattr(Session, "_Bound") or not Session._Bound:
-        global Config
-        Config = ConfigParser()
-        Config.read([CONF_LOCATION,os.path.join(os.getcwd(), "anigraterc")])
-
         if Config.has_option("database", "uri"):
             engine = create_engine(Config.get("database", "uri"))
             Base.metadata.bind = engine
