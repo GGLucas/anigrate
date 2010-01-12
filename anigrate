@@ -719,12 +719,12 @@ LOG_PAGE_HTML = """
             text-align: center;
         }
 
-        a:link, a:visited {
+        .log a:link, a:visited {
             color: black;
             text-decoration: none;
         }
 
-        a:hover {
+        .log a:hover {
             text-decoration: underline;
         }
 
