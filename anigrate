@@ -136,9 +136,9 @@ else:
     DISPLAY_HIST_HEADER = """\n  %(header)sHistory%(normal)s\n ────────────────────────────────────────────────────┬──────────────────┬───────""" % COLOR
     DISPLAY_HIST_FOOTER = """ ────────────────────────────────────────────────────┴──────────────────┴───────\n"""
 
-    DISPLAY_LOG_HEADER = """%(log_line)s ──────────────────────────────────────────┼─────────┬────────┼────────%(normal)s""" % COLOR
+    DISPLAY_LOG_HEADER = """%(log_line)s ──────────────────────────────────────────┼─────────┴────────┼────────%(normal)s""" % COLOR
     DISPLAY_LOG = """  season %%(season)s to ep %%(finishep)s                       %(log_line)s│%(normal)s %%(date)s """ % COLOR
-    DISPLAY_LOG_FOOTER = """%(log_line)s ──────────────────────────────────────────┼─────────┴────────┼────────%(normal)s""" % COLOR
+    DISPLAY_LOG_FOOTER = """%(log_line)s ──────────────────────────────────────────┼─────────┬────────┼────────%(normal)s""" % COLOR
 
 DISPLAY_STATS = ("""
  %(header)sStatistics%(normal)s
