@@ -660,6 +660,15 @@ LOG_PAGE_HTML = """
             text-align: center;
         }
 
+        a:link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
         td.f_0 { font-weight: bold; }
         td.d_1 { color: #cc3030; }
 
@@ -714,7 +723,7 @@ INFO_HTML = """
 
 LOG_HTML = """<tr><td>season <strong>%(season)s</strong> to ep <strong>%(episode)s</strong></td> <td>%(date)s</td></tr>"""
 
-HIST_HTML = """<tr><td class="r_%(rating)d f_%(finished)d d_%(dropped)d series">%(series)s</td><td>season <strong>%(season)s</strong> to ep <strong>%(episode)s</strong></td> <td>%(date)s</td></tr>"""
+HIST_HTML = """<tr><td class="r_%(rating)d f_%(finished)d d_%(dropped)d series"><a href="%(link)s">%(series)s</a></td><td><a href="%(loglink)s">season <strong>%(season)s</strong> to ep <strong>%(episode)s</strong></a></td> <td>%(date)s</td></tr>"""
 
 # }}}
 
@@ -1433,7 +1442,9 @@ def application(environ, start_response):
 
             # Generate page
             data = LOG_PAGE_HTML % data
+        # }}}
     elif uri.startswith("hist/"):
+        # {{{ History page
         # Remove hist argument
         selector = selector[1:]
 
@@ -1472,6 +1483,9 @@ def application(environ, start_response):
                 "season": watch.seasonnum,
                 "episode": watch.finishep,
                 "date": watch.time.strftime(DATE_FORMAT_HTML),
+
+                "link": series.getlink(),
+                "loglink": data['uri']+"/log/"+quote(series.title),
             }
 
         # Generate page
