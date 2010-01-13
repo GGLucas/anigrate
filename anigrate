@@ -486,8 +486,11 @@ body {
     margin: 0;
 }
 
-#log table {
+#log {
     margin: 1em;
+}
+
+#log table {
     padding: 0;
     width: 100%;
 }
