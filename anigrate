@@ -657,20 +657,20 @@ div.year strong, div.year span {
     padding: .3em;
 }
 
-#series li.f_0, td.f_0 { font-weight: bold; }
-#series li.d_1 a, td.d_1 { color: #cc3030; }
+.f_0 { font-weight: bold; }
+.d_1, .d_1 a { color: #cc3030; }
 
-#series li.r_10, #series li.r_10 a:last-child, td.r_10 { background: #80ff80; }
-#series li.r_9,  #series li.r_9 a:last-child,  td.r_9  { background: #99ff80; }
-#series li.r_8,  #series li.r_8 a:last-child,  td.r_8  { background: #b3ff80; }
-#series li.r_7,  #series li.r_7 a:last-child,  td.r_7  { background: #ccff80; }
-#series li.r_6,  #series li.r_6 a:last-child,  td.r_6  { background: #e6ff80; }
-#series li.r_5,  #series li.r_5 a:last-child,  td.r_5  { background: #ffff80; }
-#series li.r_4,  #series li.r_4 a:last-child,  td.r_4  { background: #ffe680; }
-#series li.r_3,  #series li.r_3 a:last-child,  td.r_3  { background: #ffcc80; }
-#series li.r_2,  #series li.r_2 a:last-child,  td.r_2  { background: #ffb380; }
-#series li.r_1,  #series li.r_1 a:last-child,  td.r_1  { background: #ff9980; }
-#series li.r_0,  #series li.r_0 a:last-child,  td.r_0  { background: #ffffff; }
+.r_10, #series li.r_10 a:last-child { background: #80ff80; }
+.r_9,  #series li.r_9 a:last-child  { background: #99ff80; }
+.r_8,  #series li.r_8 a:last-child  { background: #b3ff80; }
+.r_7,  #series li.r_7 a:last-child  { background: #ccff80; }
+.r_6,  #series li.r_6 a:last-child  { background: #e6ff80; }
+.r_5,  #series li.r_5 a:last-child  { background: #ffff80; }
+.r_4,  #series li.r_4 a:last-child  { background: #ffe680; }
+.r_3,  #series li.r_3 a:last-child  { background: #ffcc80; }
+.r_2,  #series li.r_2 a:last-child  { background: #ffb380; }
+.r_1,  #series li.r_1 a:last-child  { background: #ff9980; }
+.r_0,  #series li.r_0 a:last-child  { background: #ffffff; }
 """
 # }}}
 
@@ -1643,7 +1643,9 @@ def application(environ, start_response):
             data['cat_uri'] = data['uri']
 
         # Unsorted uri
-        data['nosort_uri'] = data['uri']+"/"+"/".join([x for x in selector if not x.startswith("@")])
+        data['nosort_uri'] = quote("/".join(
+            [data['uri']]+[x for x in selector if not x.startswith("@")]
+        ))
 
         # Category list
         data['categories'] = ''
