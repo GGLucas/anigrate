@@ -1505,7 +1505,8 @@ def application(environ, start_response):
         for watch, series in session.query(Watched, Series).join(
                 (selection, Watched.series_id == selection.c.id)
             ).filter(Series.id == Watched.series_id).order_by(
-                Watched.time.desc()
+                Watched.time.desc(), Watched.seasonnum.desc(),
+                   Watched.finishep.desc()
             ).limit(limit):
             data['log'] += HIST_HTML % {
                 "series": series.title,
