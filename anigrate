@@ -383,6 +383,297 @@ Copyright (C) 2009 Lucas de Vries
 License WTFPL: <http://sam.zoy.org/wtfpl>"""
 # }}}
 
+# {{{ Weblist CSS
+CSS_NAME = ""
+CSS_MTIME = 0
+
+WEBLIST_CSS = """
+body {
+    font-family: sans-serif; 
+    background: white;
+    color: black;
+}
+
+#header > h1, #header > h2 {
+    margin: 0;
+    text-align: center;
+}
+
+#header > span {
+    display: block;
+    text-align: center;
+    font-size: 0.8em;
+}
+
+#header a:link, #header a:visited {
+    text-decoration: none;
+}
+
+#gentime {
+    font-size: 0.6em;
+    padding-top: 1em;
+    text-align: center;
+}
+
+#info {
+    margin: 1em auto 0;
+    border: 1px solid #cccccc;
+    background: #f7f7f7;
+    display: table;
+    font-size: 0.8em;
+    min-width: 20em;
+}
+
+#info ul {
+    margin: 0;
+    padding: .5em;
+}
+
+#info li {
+    margin: 0;
+    list-style: none;
+    display: table-row;
+}
+
+#info li span {
+    display: table-cell;
+}
+
+#info li span:first-child {
+    min-width: 10em;
+    font-weight: bold;
+}
+
+#quicklinks, #legend {
+    margin: 1em auto 0;
+    border: 1px solid #cccccc;
+    background: #f7f7f7;
+    display: table;
+}
+
+#quicklinks ul {
+    margin: 0;
+    padding: 0;
+}
+
+#quicklinks li {
+    list-style: square inside;
+    margin: 0;
+    padding-top: 0.3em;
+    font-size: 0.8em;
+}
+
+#quicklinks a:link, #quicklinks a:visited {
+    color: black;
+    text-decoration: none;
+}
+
+#quicklinks a:hover {
+    text-decoration: underline;
+}
+
+#quicklinks > div {
+    display: table-row;
+}
+
+#quicklinks > div > div {
+    padding: 1em;
+    min-width: 8em;
+    display: table-cell;
+}
+
+#quicklinks h3 {
+    margin: 0;
+}
+
+#log table {
+    margin: 1em;
+    padding: 0;
+    width: 100%;
+}
+
+#log tr {
+    list-style: none;
+    width: 100%;
+}
+
+#log td {
+    padding: .3em;
+}
+
+#log tr:nth-child(odd) {
+    background: #e7e7e7;
+}
+
+#log tr:nth-child(even) {
+    background: #f7f7f7;
+}
+
+#log a:link, a:visited {
+    color: black;
+    text-decoration: none;
+}
+
+#log a:hover {
+    text-decoration: underline;
+}
+
+#legend {
+    padding: .4em;
+    font-size: .6em;
+}
+
+#legend div:last-child {
+    margin-top: 1em;
+}
+
+#legend h4 {
+    margin: 0;
+    padding: 0;
+}
+
+#series ul {
+    -moz-column-count: 4;
+    -webkit-column-count: 4;
+    column-count: 4;
+    margin: 1em 0;
+    padding: 0;
+}
+
+#series li {
+    display: block;
+    list-style: none;
+    margin: 0;
+    position: relative;
+}
+
+#series li a:first-child {
+    padding: .5em;
+    display: block;
+}
+
+#series li a:last-child {
+    display: none;
+    position: absolute;
+    font-size: 0.7em;
+    font-weight: bold;
+    padding-left: 0.5em;
+    padding-bottom: 0.4em;
+
+    bottom: 0.6em;
+    right: .6em;
+}
+
+#series li:hover a:last-child {
+    display: block;
+}
+
+#series li a:link, li a:visited {
+    color: black;
+    text-decoration: none;
+}
+
+#series li a:hover {
+    text-decoration: underline;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    /** Webkit does _not_ like position:relative inside
+        a css3 column list. **/
+
+    #series li {
+        position: static;
+    }
+
+    #series li a:last-child {
+        position: static;
+        float: right;
+        margin-top: -2.3em;
+        margin-right: .6em;
+        top: none;
+        right: none;
+    }
+}
+
+div.year {
+    float: left;
+    width: 50%;
+    padding-bottom: 1em;
+}
+
+div#weekdays {
+    padding-bottom: 1.3em;
+}
+
+div#hours {
+    clear: both;
+}
+
+div.year strong {
+    clear: left;
+    min-width: 30%;
+}
+
+#stats h3 {
+    margin: 0;
+}
+
+div.year strong, div.year span {
+    float: left;
+    display: block;
+    font-size: .7em;
+}
+
+#stats table {
+    width: 100%;
+    clear: both;
+    padding-right: 0.5em;
+}
+
+#stats tr.stat:nth-child(even) {
+    background: #f7f7f7;
+}
+
+#stats tr.stat:nth-child(odd) {
+    background: #e7e7e7;
+}
+
+#stats td {
+    padding: .3em;
+}
+
+#stats td:last-child {
+    width: 50%;
+    padding: 0;
+}
+
+#stats tr.stat:nth-child(even) td:last-child > div {
+    background: #99ff80;
+    padding: .3em;
+}
+
+#stats tr.stat:nth-child(odd) td:last-child > div {
+    background: #ffe680;
+    padding: .3em;
+}
+
+#series li.f_0, td.f_0 { font-weight: bold; }
+#series li.d_1 a, td.d_1 { color: #cc3030; }
+
+#series li.r_10, #series li.r_10 a:last-child, td.r_10 { background: #80ff80; }
+#series li.r_9,  #series li.r_9 a:last-child,  td.r_9  { background: #99ff80; }
+#series li.r_8,  #series li.r_8 a:last-child,  td.r_8  { background: #b3ff80; }
+#series li.r_7,  #series li.r_7 a:last-child,  td.r_7  { background: #ccff80; }
+#series li.r_6,  #series li.r_6 a:last-child,  td.r_6  { background: #e6ff80; }
+#series li.r_5,  #series li.r_5 a:last-child,  td.r_5  { background: #ffff80; }
+#series li.r_4,  #series li.r_4 a:last-child,  td.r_4  { background: #ffe680; }
+#series li.r_3,  #series li.r_3 a:last-child,  td.r_3  { background: #ffcc80; }
+#series li.r_2,  #series li.r_2 a:last-child,  td.r_2  { background: #ffb380; }
+#series li.r_1,  #series li.r_1 a:last-child,  td.r_1  { background: #ff9980; }
+#series li.r_0,  #series li.r_0 a:last-child,  td.r_0  { background: #ffffff; }
+"""
+# }}}
+
 # {{{ Weblist HTML
 # {{{ List page
 PAGE_HTML = """
@@ -392,169 +683,7 @@ PAGE_HTML = """
   <head>
     <title>%(title)s: %(selector)s</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
-    <style type='text/css'>
-        body {
-            font-family: sans-serif; 
-            background: white;
-            color: black;
-        }
-
-        #header > h1, #header > h2 {
-            margin: 0;
-            text-align: center;
-        }
-
-        #header > span {
-            display: block;
-            text-align: center;
-            font-size: 0.8em;
-        }
-
-        #header a:link, #header a:visited {
-            text-decoration: none;
-        }
-
-        #gentime {
-            font-size: 0.6em;
-            padding-top: 1em;
-            text-align: center;
-        }
-
-        #quicklinks, #legend {
-            margin: 1em auto 0;
-            border: 1px solid #cccccc;
-            background: #f7f7f7;
-            display: table;
-        }
-
-        #quicklinks ul {
-            margin: 0;
-            padding: 0;
-        }
-
-        #quicklinks li {
-            list-style: square inside;
-            margin: 0;
-            padding-top: 0.3em;
-            font-size: 0.8em;
-        }
-
-        #quicklinks a:link, #quicklinks a:visited {
-            color: black;
-            text-decoration: none;
-        }
-
-        #quicklinks a:hover {
-            text-decoration: underline;
-        }
-
-        #quicklinks > div {
-            display: table-row;
-        }
-
-        #quicklinks > div > div {
-            padding: 1em;
-            min-width: 8em;
-            display: table-cell;
-        }
-
-        #quicklinks h3 {
-            margin: 0;
-        }
-
-        #legend {
-            padding: .4em;
-            font-size: .6em;
-        }
-
-        #legend div:last-child {
-            margin-top: 1em;
-        }
-
-        #legend h4 {
-            margin: 0;
-            padding: 0;
-        }
-
-        #series ul {
-            -moz-column-count: 4;
-            -webkit-column-count: 4;
-            column-count: 4;
-            margin: 1em 0;
-            padding: 0;
-        }
-
-        #series li {
-            display: block;
-            list-style: none;
-            margin: 0;
-            position: relative;
-        }
-
-        #series li a:first-child {
-            padding: .5em;
-            display: block;
-        }
-
-        #series li a:last-child {
-            display: none;
-            position: absolute;
-            font-size: 0.7em;
-            font-weight: bold;
-            padding-left: 0.5em;
-            padding-bottom: 0.4em;
-
-            bottom: 0.6em;
-            right: .6em;
-        }
-
-        #series li:hover a:last-child {
-            display: block;
-        }
-
-        #series li a:link, li a:visited {
-            color: black;
-            text-decoration: none;
-        }
-
-        #series li a:hover {
-            text-decoration: underline;
-        }
-
-        @media screen and (-webkit-min-device-pixel-ratio:0) {
-            /** Webkit does _not_ like position:relative inside
-                a css3 column list. **/
-
-            #series li {
-                position: static;
-            }
-
-            #series li a:last-child {
-                position: static;
-                float: right;
-                margin-top: -2.3em;
-                margin-right: .6em;
-                top: none;
-                right: none;
-            }
-        }
-
-        #series li.f_0 { font-weight: bold; }
-        #series li.d_1 a { color: #cc3030; }
-
-        #series li.r_10, #series li.r_10 a:last-child { background: #80ff80; }
-        #series li.r_9, #series li.r_9 a:last-child { background: #99ff80; }
-        #series li.r_8, #series li.r_8 a:last-child { background: #b3ff80; }
-        #series li.r_7, #series li.r_7 a:last-child { background: #ccff80; }
-        #series li.r_6, #series li.r_6 a:last-child { background: #e6ff80; }
-        #series li.r_5, #series li.r_5 a:last-child { background: #ffff80; }
-        #series li.r_4, #series li.r_4 a:last-child { background: #ffe680; }
-        #series li.r_3, #series li.r_3 a:last-child { background: #ffcc80; }
-        #series li.r_2, #series li.r_2 a:last-child { background: #ffb380; }
-        #series li.r_1, #series li.r_1 a:last-child { background: #ff9980; }
-        #series li.r_0, #series li.r_0 a:last-child { background: #ffffff; }
-    </style>
+    <link rel="stylesheet" href="%(cssname)s" type="text/css" media="screen" charset="utf-8">
   </head>
   <body>
     <div id='header'>
@@ -638,112 +767,7 @@ LOG_PAGE_HTML = """
   <head>
   <title>%(title)s: %(selector)s</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
-    <style type='text/css'>
-        body {
-            font-family: sans-serif; 
-            background: white;
-            color: black;
-        }
-
-        #header > h1, #header > h2 {
-            margin: 0;
-            text-align: center;
-        }
-
-        #header > span {
-            display: block;
-            text-align: center;
-            font-size: 0.8em;
-        }
-
-        #header a:link, #header a:visited {
-            text-decoration: none;
-        }
-
-        #info {
-            margin: 1em auto 0;
-            border: 1px solid #cccccc;
-            background: #f7f7f7;
-            display: table;
-            font-size: 0.8em;
-            min-width: 20em;
-        }
-
-        #info ul {
-            margin: 0;
-            padding: .5em;
-        }
-
-        #info li {
-            margin: 0;
-            list-style: none;
-            display: table-row;
-        }
-
-        #info li span {
-            display: table-cell;
-        }
-
-        #info li span:first-child {
-            min-width: 10em;
-            font-weight: bold;
-        }
-
-        #log table {
-            margin: 1em;
-            padding: 0;
-            width: 100%%;
-        }
-
-        #log tr {
-            list-style: none;
-            width: 100%%;
-        }
-
-        #log td {
-            padding: .3em;
-        }
-
-        #log tr:nth-child(odd) {
-            background: #e7e7e7;
-        }
-
-        #log tr:nth-child(even) {
-            background: #f7f7f7;
-        }
-
-        #gentime {
-            font-size: 0.6em;
-            padding-top: 1em;
-            text-align: center;
-        }
-
-        #log a:link, a:visited {
-            color: black;
-            text-decoration: none;
-        }
-
-        #log a:hover {
-            text-decoration: underline;
-        }
-
-        td.f_0 { font-weight: bold; }
-        td.d_1 { color: #cc3030; }
-
-        td.r_10  { background: #80ff80; }
-        td.r_9   { background: #99ff80; }
-        td.r_8   { background: #b3ff80; }
-        td.r_7   { background: #ccff80; }
-        td.r_6   { background: #e6ff80; }
-        td.r_5   { background: #ffff80; }
-        td.r_4   { background: #ffe680; }
-        td.r_3   { background: #ffcc80; }
-        td.r_2   { background: #ffb380; }
-        td.r_1   { background: #ff9980; }
-
-        td.series { width: 40%%; }
-    </style>
+    <link rel="stylesheet" href="%(cssname)s" type="text/css" media="screen" charset="utf-8">
   </head>
   <body>
     <div id="header">
@@ -794,96 +818,10 @@ STATS_PAGE_HTML = """
   <head>
     <title>%(title)s: %(selector)s</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="%(cssname)s" type="text/css" media="screen" charset="utf-8">
 
     <style type='text/css'>
-        body {
-            font-family: sans-serif; 
-            background: white;
-            color: black;
-        }
 
-        #header > h1, #header > h2 {
-            margin: 0;
-            text-align: center;
-        }
-
-        #header > span {
-            display: block;
-            text-align: center;
-            font-size: 0.8em;
-        }
-
-        #header a:link, #header a:visited {
-            text-decoration: none;
-        }
-
-        #gentime {
-            font-size: 0.6em;
-            padding-top: 2em;
-            text-align: center;
-        }
-
-        div.year {
-            float: left;
-            width: 50%%;
-            padding-bottom: 1em;
-        }
-
-        div#weekdays {
-            padding-bottom: 1.3em;
-        }
-
-        div#hours {
-            clear: both;
-        }
-
-        div.year strong {
-            clear: left;
-            min-width: 30%%;
-        }
-
-        h3 {
-            margin: 0;
-        }
-
-        div.year strong, div.year span {
-            float: left;
-            display: block;
-            font-size: .7em;
-        }
-
-        table {
-            width: 100%%;
-            clear: both;
-            padding-right: 0.5em;
-        }
-
-        tr.stat:nth-child(even) {
-            background: #f7f7f7;
-        }
-
-        tr.stat:nth-child(odd) {
-            background: #e7e7e7;
-        }
-
-        td {
-            padding: .3em;
-        }
-
-        td:last-child {
-            width: 50%%;
-            padding: 0;
-        }
-
-        tr.stat:nth-child(even) td:last-child > div {
-            background: #99ff80;
-            padding: .3em;
-        }
-
-        tr.stat:nth-child(odd) td:last-child > div {
-            background: #ffe680;
-            padding: .3em;
-        }
     </style>
   </head>
   <body>
@@ -896,6 +834,7 @@ STATS_PAGE_HTML = """
       </span>
     </div>
 
+    <div id='stats'>
     <div id='weekdays'>
     <h3>Weekdays</h3>
     <table>
@@ -922,6 +861,7 @@ STATS_PAGE_HTML = """
         "hrplus": hr+1,
      } for hr in range(0,24))+"""
     </table>
+    </div>
     </div>
 
     <div id="gentime">page generated by <a href='"""+ANIGRATE_URI+"""'>anigrate v"""+str(ANIGRATE_VERSION)+"""</a> in {{GENTIME}}s</div>
@@ -1107,7 +1047,7 @@ def dbbind():
             Session.configure(bind=engine)
         else:
             # Default location
-            if not os.access(CONF_DIR, os.F_OK):
+            if not os.path.exists(CONF_DIR):
                 os.mkdir(CONF_DIR)
 
             engine = create_engine('sqlite:///'+DB_LOCATION)
@@ -1115,7 +1055,7 @@ def dbbind():
             Session.configure(bind=engine)
             Session._Bound = True
 
-            if not os.access(DB_LOCATION, os.F_OK):
+            if not os.path.exists(DB_LOCATION):
                 initdb(session=Session())
 
     return Session()
@@ -1444,11 +1384,46 @@ def application(environ, start_response):
     if not uri: uri = '/'
     elif uri[-1] != "/": uri += "/"
 
+    # Default headers
+    mime = "text/html"
+    headers = []
+
     # Connect to db
     session = dbbind()
 
+    # Get css name to use
+    cssname = environ.get("SCRIPT_NAME", "/").rstrip("/")+"/css/master.css"
+
+    if Config.has_option("weblist", "css"):
+        cssconf = Config.get("weblist", "css")
+
+        if cssconf.startswith("uri:"):
+            # Use a literal uri
+            cssname = cssconf[4:]
+        else:
+            global WEBLIST_CSS,CSS_NAME,CSS_MTIME
+
+            # Strip file prefix
+            if cssconf.startswith("file:"):
+                cssconf = cssconf[5:]
+
+            # Check if we should load the file
+            if os.path.exists(cssconf):
+                mtime = os.path.getmtime(cssconf)
+
+                if CSS_NAME != cssconf or CSS_MTIME != mtime:
+                    CSS_MTIME = mtime
+                    CSS_NAME = cssconf
+                    WEBLIST_CSS = "".join(open(cssconf).readlines())
+
     # Check for page to display
-    if uri.startswith("log/"):
+    if uri == "css/master.css/":
+        # {{{ CSS
+        data = WEBLIST_CSS
+        headers.append(("Cache-Control", "max-age=3600"))
+        mime = "text/css"
+        # }}}
+    elif uri.startswith("log/"):
         # {{{ Log page
         # Remove log argument
         selector = ["%exact", "/".join(selector[1:])]
@@ -1462,6 +1437,7 @@ def application(environ, start_response):
         else:
             series = selection[0]
             data = {
+                "cssname": cssname,
                 "title": Config.get("weblist","title_log") \
                         if Config.has_option("weblist","title_log") \
                         else DEFAULT_TITLE_LOG,
@@ -1506,6 +1482,7 @@ def application(environ, start_response):
         # Get selection
         selection = getselection(session, selector, list=False)
         data = {
+            "cssname": cssname,
             "title": Config.get("weblist","title_log") \
                     if Config.has_option("weblist","title_log") \
                     else DEFAULT_TITLE_LOG,
@@ -1557,6 +1534,7 @@ def application(environ, start_response):
 
         # Page data dictionary
         data = {
+            "cssname": cssname,
             "title": Config.get("weblist","title_stats") if Config.has_option("weblist","title_stats") else DEFAULT_TITLE_STATS,
             "selector": selname,
             "urlselector": quote("/".join(selector)),
@@ -1583,6 +1561,7 @@ def application(environ, start_response):
 
         # Page data dictionary
         data = {
+            "cssname": cssname,
             "series": "",
             "seriestime": 1.56,
             "urlselector": quote("/".join(selector)),
@@ -1649,10 +1628,10 @@ def application(environ, start_response):
 
     # Send response
     if (Config.has_option("weblist", "gzip") and Config.get("weblist", "gzip") == "no") or not has_gzip:
-        start_response('200 OK', [('Content-Type', 'text/html', 'Content-Encoding', 'gzip')])
+        start_response('200 OK', [('Content-Type', mime, 'Content-Encoding', 'gzip')]+headers)
         return data.replace("{{GENTIME}}", str(round(time.time()-start_time, 3)), 1)
     else:
-        start_response('200 OK', [('Content-Type', 'text/html'), ('Content-Encoding', 'gzip')])
+        start_response('200 OK', [('Content-Type', mime), ('Content-Encoding', 'gzip')]+headers)
         strfile = StringIO.StringIO()
         gzfile = gzip.GzipFile(None, 'wb', 6, fileobj=strfile)
         gzfile.write(data.replace("{{GENTIME}}", str(round(time.time()-start_time, 3)), 1))

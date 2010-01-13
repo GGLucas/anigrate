@@ -9,6 +9,13 @@
 #uri=sqlite:////home/myuser/.anigrate/db
 #uri=mysql://remoteuser:password@domain.tld:5432/anigratedb
 
+# Appearance configuration
+[appearance]
+## Whether colors are enabled at all
+#color_enabled=yes
+## Whether to use box-drawing unicode glyphs or ascii
+#unicode_enabled=yes
+
 # Weblist configuration
 [weblist]
 ## Title displayed for list pages
@@ -19,6 +26,9 @@
 #title_stats=Watch Stats
 ## Default selector to display
 #default=@title
+## CSS stylesheet to use
+#css=uri:http://mydomain.tld/anigrate.css
+#css=file:anigrate.css
 
 # Links opened for series, by category
 [link]
@@ -28,13 +38,6 @@ default=http://en.wikipedia.org/wiki/Special:Search?search=%s
 anime=http://myanimelist.net/anime.php?q=%s
 ## If category=tv, open tv.com
 tv=http://www.tv.com/search.php?qs=%s
-
-# Appearance configuration
-[appearance]
-## Whether colors are enabled at all
-#color_enabled=yes
-## Whether to use box-drawing unicode glyphs or ascii
-#unicode_enabled=yes
 
 # Colors used by the commandline 
 [color]
