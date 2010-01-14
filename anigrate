@@ -635,6 +635,10 @@ div.year strong {
     margin: 1em 0 .3em 0;
 }
 
+#stats h2:first-child {
+    margin-top: 0;
+}
+
 div.year strong, div.year span {
     float: left;
     display: block;
