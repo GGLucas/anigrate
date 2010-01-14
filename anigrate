@@ -1061,7 +1061,8 @@ def dbbind():
     # Try to read config
     if not hasattr(Session, "_Bound") or not Session._Bound:
         if Config.has_option("database", "uri"):
-            engine = create_engine(Config.get("database", "uri"))
+            engine = create_engine(Config.get("database", "uri"),
+                               pool_size=100, pool_recycle=7200)
             Base.metadata.bind = engine
             Session._Bound = True
             Session.configure(bind=engine)
