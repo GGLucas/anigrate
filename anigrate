@@ -661,7 +661,7 @@ div.year strong, div.year span {
 }
 
 .f_0 { font-weight: bold; }
-.d_1, .d_1 a { color: #cc3030; }
+.d_1, .d_1 a, #series li.d_1 a { color: #cc3030; }
 
 .r_10, #series li.r_10 a:last-child { background: #80ff80; }
 .r_9,  #series li.r_9 a:last-child  { background: #99ff80; }
