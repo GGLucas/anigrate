@@ -696,6 +696,8 @@ div.year strong, div.year span {
 .r_2,  #series li.r_2 a:last-child  { background: #ffb380; }
 .r_1,  #series li.r_1 a:last-child  { background: #ff9980; }
 .r_0,  #series li.r_0 a:last-child  { background: #ffffff; }
+
+#log td.r_0 { background: none; }
 """
 # }}}
 
