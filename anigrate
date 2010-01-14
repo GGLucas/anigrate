@@ -144,6 +144,16 @@ DISPLAY_STATS = ("""
  %(header)sStatistics%(normal)s
  ==========
 
+ %(header)sBy Rating%(normal)s
+ ----------
+"""+"\n".join(
+ (" %%(stat_name)s%(rname)-12s %%(stat_num)s%%%%(rating_%(dy)d_num)5s series"+\
+  "    %%(stat_perc)s%%%%(rating_%(dy)d_perc)5.1f%%%%%%%%") % {
+      "dy": dy,
+      "rname": dy if dy else "Unrated",
+ } for dy in reversed(range(0,11)))+
+"""
+
  %(header)sBy Year%(normal)s
  -----
 %%(years)s %(header)sBy Weekday%(normal)s
@@ -621,6 +631,10 @@ div.year strong {
     margin: 0;
 }
 
+#stats h2 {
+    margin: 1em 0 .3em 0;
+}
+
 div.year strong, div.year span {
     float: left;
     display: block;
@@ -643,6 +657,10 @@ div.year strong, div.year span {
 
 #stats td {
     padding: .3em;
+}
+
+#stats td:first-child {
+    width: 25%;
 }
 
 #stats td:last-child {
@@ -844,6 +862,19 @@ STATS_PAGE_HTML = """
     </div>
 
     <div id='stats'>
+    <h2>Ratings</h2>
+    <div id='ratings'>
+    <table>
+    """+"\n".join((" <tr class='stat'>"+\
+     "<td>%(rname)s</td> <td>%%(rating_%(r)d_num)5s series</td>"+\
+     " <td><div style='width: %%(rating_%(r)d_perc)s%%%%'>%%(rating_%(r)d_perc)5.1f%%%%</div></td>") % {
+        "r": r,
+        "rname": r if r else "Unrated",
+     } for r in reversed(range(0,11)))+"""
+     </table>
+     </div>
+
+    <h2>Watch Time</h2>
     <div id='weekdays'>
     <h3>Weekdays</h3>
     <table>
@@ -1191,6 +1222,7 @@ def getstats(session, selection):
 
     # Make sure the selection is loaded
     sel = [selection.all()]
+    totalseries = len(sel[0])
 
     # Create watched query
     if selection:
@@ -1213,6 +1245,7 @@ def getstats(session, selection):
     [fill(0, 0, "day_"+str(i), stats) for i in range(1,8)]
     [fill(0, 0, "month_"+str(i), stats) for i in range(1,13)]
     [fill(0, 0, "hour_"+str(i), stats) for i in range(0,24)]
+    [fill(0, 0, "rating_"+str(i), stats) for i in range(0,11)]
 
     # Gather stats
     for watched in q.all():
@@ -1236,6 +1269,9 @@ def getstats(session, selection):
         fill(amn, time, "hour_"+str(watched.time.hour), stats)
         fill(amn, time, "month_"+str(watched.time.month), stats)
 
+    for series in sel[0]:
+        fill(1, 1, "rating_"+str(series.rating), stats)
+
     # Gather percentages
     percs = {}
 
@@ -1243,7 +1279,11 @@ def getstats(session, selection):
     for nm in stats:
         if not nm.startswith("total") and nm.endswith("_min"):
             perc = "_".join(nm.split("_")[:-1])+"_perc"
-            percs[perc] = stats[nm]/float(stats["total_min"])*100
+
+            if nm.startswith("rating_"):
+                percs[perc] = stats[nm]/float(totalseries)*100
+            else:
+                percs[perc] = stats[nm]/float(stats["total_min"])*100
     stats.update(percs)
 
     for yr in stats['year']:
