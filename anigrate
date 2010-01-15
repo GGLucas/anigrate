@@ -417,6 +417,7 @@ body {
 
 #header a:link, #header a:visited {
     text-decoration: none;
+    color: blue;
 }
 
 #gentime {
