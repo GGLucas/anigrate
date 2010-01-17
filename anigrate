@@ -1842,7 +1842,6 @@ def add(arg, selector):
             return "Error: duration is not a valid number."
 
     session.add(series)
-    session.commit()
 
     ## Parse episodes
     if len(arg) > 1:
@@ -1881,7 +1880,6 @@ def add(arg, selector):
             session.add(season)
 
             if watched > 0:
-                session.commit()
                 w = Watched()
                 w.series = series
                 w.season = season
@@ -1893,13 +1891,13 @@ def add(arg, selector):
 
         series.current = seasons
         series.eval_finished()
-        session.commit()
     else:
         ## First season
         season = Season(num=1)
         season.series = series
         session.add(season)
-        session.commit()
+
+    session.commit()
 # }}}
 
 # {{{ remove
@@ -2217,7 +2215,6 @@ def add(arg, selector):
         session.add(season)
 
         if watched:
-            session.commit()
             w = Watched()
             w.series = sel
             w.season = season
