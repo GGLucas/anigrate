@@ -400,6 +400,7 @@ CSS_MTIME = 0
 WEBLIST_CSS = """
 body {
     font-family: sans-serif; 
+    font-size: 0.9em;
     background: white;
     color: black;
 }
@@ -421,7 +422,7 @@ body {
 }
 
 #gentime {
-    font-size: 0.6em;
+    font-size: 0.7em;
     padding-top: 1em;
     text-align: center;
 }
@@ -515,6 +516,10 @@ body {
     padding: .3em;
 }
 
+#log td:nth-child(2):not(:last-child) {
+    text-align: center;
+}
+
 #log tr:nth-child(odd) {
     background: #e7e7e7;
 }
@@ -534,7 +539,7 @@ body {
 
 #legend {
     padding: .4em;
-    font-size: .6em;
+    font-size: .7em;
 }
 
 #legend div:last-child {
@@ -567,7 +572,6 @@ body {
 }
 
 #series li a:last-child {
-    display: none;
     position: absolute;
     font-size: 0.7em;
     font-weight: bold;
@@ -576,10 +580,16 @@ body {
 
     bottom: 0.6em;
     right: .6em;
+
+    -moz-opacity: 0.3;
+    -webkit-opacity: 0.3;
+    opacity: 0.3;
 }
 
 #series li:hover a:last-child {
-    display: block;
+    -moz-opacity: 1;
+    -webkit-opacity: 1;
+    opacity: 1;
 }
 
 #series li a:link, li a:visited {
@@ -838,7 +848,7 @@ INFO_HTML = """
 
 LOG_HTML = """<tr><td>season <strong>%(season)s</strong> to ep <strong>%(episode)s</strong></td> <td>%(date)s</td></tr>"""
 
-HIST_HTML = """<tr><td class="r_%(rating)d f_%(finished)d d_%(dropped)d series"><a href="%(link)s">%(series)s</a></td><td><a href="%(loglink)s">season <strong>%(season)s</strong> to ep <strong>%(episode)s</strong></a></td> <td>%(date)s</td></tr>"""
+HIST_HTML = """<tr><td class="r_%(rating)d f_%(finished)d d_%(dropped)d series"><a href="%(link)s">%(series)s</a></td><td><a href="%(uri)s/=%(category)s">%(category)s</a></td><td><a href="%(loglink)s">season <strong>%(season)s</strong> to ep <strong>%(episode)s</strong></a></td> <td>%(date)s</td></tr>"""
 
 # }}}
 
@@ -1618,8 +1628,10 @@ def application(environ, start_response):
                 "dropped": series.dropped,
                 "season": watch.seasonnum,
                 "episode": watch.finishep,
+                "category": series.category,
                 "date": watch.time.strftime(DATE_FORMAT_HTML),
 
+                "uri": data["uri"],
                 "link": series.getlink(),
                 "loglink": data['uri']+"/log/"+quote(series.title),
             }
