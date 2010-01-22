@@ -581,15 +581,11 @@ body {
     bottom: 0.6em;
     right: .6em;
 
-    -moz-opacity: 0;
-    -webkit-opacity: 0;
-    opacity: 0;
+    visibility: hidden;
 }
 
 #series li:hover a:last-child {
-    -moz-opacity: 1;
-    -webkit-opacity: 1;
-    opacity: 1;
+    visibility: visible;
 }
 
 #series li a:link, li a:visited {
