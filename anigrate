@@ -389,7 +389,7 @@ Examples:
 
 VERSIONTEXT = """Anigrate """+str(ANIGRATE_VERSION)+""" <"""+ANIGRATE_URI+""">
 
-Copyright (C) 2009 Lucas de Vries
+Copyright (C) 2009-2010 Lucas de Vries <lucas@glacicle.org>
 License WTFPL: <http://sam.zoy.org/wtfpl>"""
 # }}}
 
@@ -1042,10 +1042,12 @@ class Watched(Base):
 
     season_id = Column(ForeignKey("seasons.id"))
     seasonnum = Column(Integer)
-    season = relation(Season, primaryjoin=(season_id == Season.id), backref="watched")
+    season = relation(Season, primaryjoin=(season_id == Season.id),
+                              backref="watched")
 
     series_id = Column(ForeignKey("series.id"))
-    series = relation(Series, primaryjoin=(series_id == Series.id), backref="watched")
+    series = relation(Series, primaryjoin=(series_id == Series.id),
+                              backref="watched")
 
     time = Column(DateTime)
 
@@ -1926,7 +1928,8 @@ def remove(arg, selector):
         print("Removing: %s..." % sel.title)
 
         for season in sel.seasons:
-            session.query(Watched).filter(Watched.season == season).delete(False)
+            session.query(Watched).filter(Watched.season == season)\
+                                  .delete(False)
             session.delete(season)
 
         session.delete(sel)
