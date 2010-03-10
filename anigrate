@@ -1825,8 +1825,13 @@ def add(arg, selector):
     selector = " ".join(selector)
 
     # Don't create if one already exists
-    if session.query(Series).filter(Series.title.ilike(selector)).all():
-        return "Error: A series with this name already exists..."
+    check_exists = session.query(Series).filter(Series.title.ilike(selector))
+
+    if len(arg) > 0:
+        check_exists = check_exists.filter(Series.category == arg[0])
+
+    if check_exists.all():
+        return "Error: A series with this name already exists in this category..."
 
     # Create a new series
     series = Series(title=selector, current=1)
