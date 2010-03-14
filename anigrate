@@ -1746,11 +1746,11 @@ def application(environ, start_response):
 
     # Get encodings
     has_gzip = [enc for enc in environ.get("HTTP_ACCEPT_ENCODING","").split(",") 
-                if enc.split(";")[0] == "gzip"]
+                if enc.split(";")[0].strip() == "gzip"]
 
     # Send response
     if (Config.has_option("weblist", "gzip") and Config.get("weblist", "gzip") == "no") or not has_gzip:
-        start_response('200 OK', [('Content-Type', mime, 'Content-Encoding', 'gzip')]+headers)
+        start_response('200 OK', [('Content-Type', mime)]+headers)
         return data.replace("{{GENTIME}}", str(round(time.time()-start_time, 3)), 1)
     else:
         start_response('200 OK', [('Content-Type', mime), ('Content-Encoding', 'gzip')]+headers)
