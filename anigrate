@@ -1261,6 +1261,7 @@ def getstats(session, selection):
     [fill(0, 0, "month_"+str(i), stats) for i in range(1,13)]
     [fill(0, 0, "hour_"+str(i), stats) for i in range(0,24)]
     [fill(0, 0, "rating_"+str(i), stats) for i in range(0,11)]
+    fill(0, 0, "total", stats)
 
     # Gather stats
     for watched in q.all():
@@ -1296,9 +1297,9 @@ def getstats(session, selection):
             perc = "_".join(nm.split("_")[:-1])+"_perc"
 
             if nm.startswith("rating_"):
-                percs[perc] = stats[nm]/float(totalseries)*100
+                percs[perc] = stats[nm]/float(totalseries)*100 if totalseries else 0
             else:
-                percs[perc] = stats[nm]/float(stats["total_min"])*100
+                percs[perc] = stats[nm]/float(stats["total_min"])*100 if stats["total_min"] else 0
     stats.update(percs)
 
     for yr in stats['year']:
@@ -1313,7 +1314,7 @@ def getstats(session, selection):
         for nm in stats['year'][yr]:
             if not nm.startswith("total") and nm.endswith("_min"):
                 perc = "_".join(nm.split("_")[:-1])+"_perc"
-                yearpercs[perc] = stats['year'][yr][nm]/float(stats['year'][yr]["total_min"])*100
+                yearpercs[perc] = stats['year'][yr][nm]/float(stats['year'][yr]["total_min"])*100 if stats['year'][yr] else 0
         stats['year'][yr].update(yearpercs)
 
     return stats
