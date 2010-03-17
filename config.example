@@ -68,7 +68,7 @@ tv=http://www.tv.com/search.php?qs=%s
 #score_high=green
 #score_normal=white
 #score_low=red
-#score_critical=bold,red # 1-4
+#score_critical=bold,red
 ## Stat colors
 #stat_name=bold,white
 #stat_year=bold,cyan
