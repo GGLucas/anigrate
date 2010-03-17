@@ -3,6 +3,11 @@
 ## called from as "anigraterc". This facilitates using specific
 ## configuration for running it through wsgi or as a server.
 
+# General anigrate settings
+[anigrate]
+## The default sort method for selectors without one
+#default_sort=split
+
 # Database location examples
 [database]
 ## Use sqlalchemy connection strings 

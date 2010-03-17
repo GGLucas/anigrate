@@ -1183,7 +1183,18 @@ def getselection(session, selector, list=True):
 
     # Default sort order
     if not sort:
-        q = q.order_by(Series.dropped.asc(), Series.finished.asc(), Series.mtime.desc())
+        default_sort = Config.get("anigrate", "default_sort") if Config.has_option("anigrate", "default_sort") else "split"
+
+        if default_sort == "rating":
+            q = q.order_by(Series.rating.desc())
+        elif default_sort == "activity":
+            q = q.order_by(Series.mtime.desc())
+        elif default_sort == "watched":
+            q = q.order_by(Series.epscurrent.desc())
+        elif default_sort == "title":
+            q = q.order_by(Series.title.asc())
+        elif default_sort == "split":
+            q = q.order_by(Series.dropped.asc(), Series.finished.asc(), Series.mtime.desc())
 
     if selector:
         selector = " ".join(selector)
