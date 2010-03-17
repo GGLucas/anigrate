@@ -377,7 +377,9 @@ Database Formats:
 
     myanimelist  [Import only]
         Uses myanimelist.net's xml export format.
-
+        When importing from animelist be sure to uncompress it before feeding
+        it to anigrate, you can use pipes for this. For example:
+          $ gunzip -c animelist_0000_-_0000.xml.gz | anigrate import - myanimelist
 
 Examples:
     Here are some example use cases, note that every selector specifier or 
@@ -2732,8 +2734,8 @@ def csv_import(session, fd, category):
         try:
             dropped = bool(int(row[2]))
             rating = int(row[3])
-            current = int(row[4])
-            watched = int(row[5])
+            season = int(row[4])
+            current = int(row[5])
             total = int(row[6])
             duration = int(row[8])
         except:
@@ -2741,7 +2743,7 @@ def csv_import(session, fd, category):
             continue
 
         # Create the series
-        series = Series(title=row[0], current=current, rating=rating, duration=duration, dropped=dropped)
+        series = Series(title=row[0], current=season, rating=rating, duration=duration, dropped=dropped)
         series.ctime = series.mtime = datetime.datetime.now()
         session.add(series)
 
@@ -2776,6 +2778,55 @@ def csv_export(session, selection, fd):
             sel.epsall,
             sel.duration,
         ])
+
+def mal_import(session, fd, category):
+    import xml.dom.minidom
+    dom = xml.dom.minidom.parse(fd)
+
+    for anime in dom.getElementsByTagName("anime"):
+        # Get values
+        try:
+            title = anime.getElementsByTagName("series_title")[0].firstChild.nodeValue
+            total = int(anime.getElementsByTagName("series_episodes")[0].firstChild.nodeValue)
+            current = int(anime.getElementsByTagName("my_watched_episodes")[0].firstChild.nodeValue)
+            rating = int(anime.getElementsByTagName("my_score")[0].firstChild.nodeValue)
+            dropped = anime.getElementsByTagName("my_status")[0].firstChild.nodeValue == "Dropped"
+        except:
+            print("ERROR: Wrong format. skipping...")
+
+        # Check whether it already exists
+        check_exists = session.query(Series).filter(
+            Series.title.ilike(title)
+        ).filter(
+            Series.category == category
+        )
+
+        if check_exists.all():
+            print("ERROR: A series with name `%s` already exists in category `%s`. skipping..." % (title, category))
+            continue
+
+        # Create series
+        series = Series(title=title, current=1, rating=rating, dropped=dropped)
+        series.ctime = series.mtime = datetime.datetime.now()
+        session.add(series)
+
+        # Create season
+        season = Season(num=1, series=series,
+            episode_total=total, current_watched=current)
+        session.add(season)
+
+        # Create watch log
+        if current > 0:
+            watched = Watched(series=series, season=season,
+                    time=datetime.datetime.now(), startep=0,
+                    finishep=current, seasonnum=1)
+            session.add(watched)
+
+        series.eval_finished()
+        print("Adding series `%s`." % title)
+
+    session.commit()
+
 ## }}}
 
 @command(name="import")
@@ -2810,6 +2861,8 @@ def db_import(arg, selector):
         csv_import(session, fd, category)
     elif format == "anidb":
         anidb_import(session, fd, category)
+    elif format == "myanimelist":
+        mal_import(session, fd, category)
     #except:
         #print("ERROR: There was a problem reading the file, is it in the correct format?")
 
