@@ -375,10 +375,10 @@ Database Formats:
     anidb
         Uses anidb.net's csv-minimal MyList export template.
 
-    myanimelist  [Import only]
+    myanimelist  [IMPORT ONLY]
         Uses myanimelist.net's xml export format.
-        When importing from animelist be sure to uncompress it before feeding
-        it to anigrate, you can use pipes for this. For example:
+        When importing from myanimelist be sure to uncompress it before feeding
+        it to anigrate; you can use pipes for this. For example:
           $ gunzip -c animelist_0000_-_0000.xml.gz | anigrate import - myanimelist
 
 Examples:
