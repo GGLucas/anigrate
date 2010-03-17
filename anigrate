@@ -4,6 +4,7 @@ import sys
 import os
 import datetime
 import time
+import csv
 
 import gzip
 import StringIO
@@ -298,6 +299,21 @@ Commands:
         ie. each item is separated by a tab character for easy parsing.
 
 
+    import [file] [format] [category]
+        Import a list of series to put in the database from a file.
+        If file is not specified the file will be read from stdin.
+        If category is specified, all new series imported will be set
+        to that category. This allows for easier organisation.
+        See "Database Formats" for an explanation on how those work.
+
+    export [file] [format]: [selector]
+        Export a list of series from in the database to a file.
+        If file is not specified the file will be output to stdout.
+        If a selector is given, only series matching that selector will be 
+        exported.
+        See "Database Formats" for an explanation on how those work.
+
+
     runserver [type] [host] [port]
         Run a server displaying an html public list on [host] (default: localhost)
         and [port] (default: 4310). Type is set to "http" by default and will 
@@ -348,6 +364,20 @@ Selectors:
     @split
         Default sort method, sorts by activity but splits into watching,
         finished and dropped groups first.
+
+Database Formats:
+    Database formats are used to determine how to read or write series
+    from or to a file, the following format specifiers are available:
+
+    csv
+        Uses a simple csv file with series titles and other info.
+
+    anidb
+        Uses anidb.net's csv-minimal MyList export template.
+
+    myanimelist  [Import only]
+        Uses myanimelist.net's xml export format.
+
 
 Examples:
     Here are some example use cases, note that every selector specifier or 
@@ -1841,6 +1871,8 @@ def add(arg, selector):
 
     if len(arg) > 0:
         check_exists = check_exists.filter(Series.category == arg[0])
+    else:
+        check_exists = check_exists.filter(Series.category == "")
 
     if check_exists.all():
         return "Error: A series with this name already exists in this category..."
@@ -2600,6 +2632,217 @@ def log(arg, selector):
 
     # Display footer
     print(DISPLAY_FOOTER%len(selection))
+# }}}
+
+# {{{ Import/Export
+## {{{ Formats
+def anidb_import(session, fd, category):
+    reader = csv.reader(fd, delimiter=';', quotechar='"')
+    reader.next()
+
+    for row in reader:
+        # Check row size
+        if not row:
+            continue
+        elif len(row) != 5:
+            print("ERROR: Malformed row, expected 5 columns. skipping...")
+            continue
+
+        # Check whether it already exists
+        check_exists = session.query(Series).filter(
+            Series.title.ilike(row[0])
+        ).filter(
+            Series.category == category
+        )
+
+        if check_exists.all():
+            print("ERROR: A series with name `%s` already exists in category `%s`. skipping..." % (row[0], category))
+            continue
+
+        # Create series
+        series = Series(title=row[0], current=1)
+        series.ctime = series.mtime = datetime.datetime.now()
+        session.add(series)
+
+        # Get watched / total amount
+        try:
+            has, total  = map(int, row[2].split(" / ", 1))
+            current, total_has = map(int, row[3].split(" / ", 1))
+        except:
+            print("ERROR: Wrong format, expected `$current / $total`. skipping...")
+            continue
+
+        # Create season
+        season = Season(num=1, series=series,
+            episode_total=total, current_watched=current)
+        session.add(season)
+
+        # Create watch log
+        if current > 0:
+            watched = Watched(series=series, season=season,
+                    time=datetime.datetime.now(), startep=0,
+                    finishep=current, seasonnum=1)
+            session.add(watched)
+
+        series.eval_finished()
+        print("Adding series `%s`." % row[0])
+
+    session.commit()
+
+def anidb_export(session, selection, fd):
+    writer = csv.writer(fd, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(["Name", "Year", "Eps", "Seen", "Size"])
+
+    for sel in selection:
+        writer.writerow([
+            sel.title,
+            0,
+            "%s / %s" % (sel.epscurrent, sel.epstotal),
+            "%s / %s" % (sel.epscurrent, sel.epstotal),
+            0
+        ])
+
+def csv_import(session, fd, category):
+    reader = csv.reader(fd, delimiter=',', quotechar='"')
+    reader.next()
+
+    for row in reader:
+        # Check for correct row size
+        if not row:
+            continue
+        elif len(row) != 9:
+            print("ERROR: Malformed row, expected 9 columns. skipping...")
+            continue
+
+        # Get correct category
+        category = category if category else row[1]
+
+        # Check if the series exists already
+        check_exists = session.query(Series).filter(
+            Series.title.ilike(row[0])
+        ).filter(
+            Series.category == category
+        )
+
+        if check_exists.all():
+            print("ERROR: A series with name `%s` already exists in category `%s`. skipping..." % (row[0], category))
+            continue
+
+        # Get integer data
+        try:
+            dropped = bool(int(row[2]))
+            rating = int(row[3])
+            current = int(row[4])
+            watched = int(row[5])
+            total = int(row[6])
+            duration = int(row[8])
+        except:
+            print("ERROR: Wrong format, expected integer. skipping...")
+            continue
+
+        # Create the series
+        series = Series(title=row[0], current=current, rating=rating, duration=duration, dropped=dropped)
+        series.ctime = series.mtime = datetime.datetime.now()
+        session.add(series)
+
+        season = Season(num=current, series=series,
+            episode_total=total, current_watched=current)
+        session.add(season)
+
+        if current > 0:
+            watched = Watched(series=series, season=season,
+                    time=datetime.datetime.now(), startep=0,
+                    finishep=current, seasonnum=current)
+            session.add(watched)
+
+        series.eval_finished()
+        print("Adding series `%s`." % row[0])
+
+    session.commit()
+
+def csv_export(session, selection, fd):
+    writer = csv.writer(fd, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(["Name", "Category", "Dropped", "Rating", "Current_Season", "Current_Seen", "Current_Total", "All_Total", "Duration"])
+
+    for sel in selection:
+        writer.writerow([
+            sel.title,
+            sel.category,
+            int(sel.dropped),
+            sel.rating,
+            sel.current,
+            sel.epscurrent,
+            sel.epstotal,
+            sel.epsall,
+            sel.duration,
+        ])
+## }}}
+
+@command(name="import")
+def db_import(arg, selector):
+    # Bind database
+    session = dbbind()
+
+    # Get file
+    if len(arg) >= 1 and arg[0] != "-":
+        try:
+            fd = open(arg[0], "r")
+        except IOError:
+            return "Error opening input file"
+    else:
+        fd = sys.stdin
+
+    # Get format
+    if len(arg) >= 2:
+        format = arg[1]
+    else:
+        format = "csv"
+
+    # Get category
+    if len(arg) >= 3:
+        category = arg[2]
+    else:
+        category = ""
+
+    # Export
+    #try:
+    if format == "csv":
+        csv_import(session, fd, category)
+    elif format == "anidb":
+        anidb_import(session, fd, category)
+    #except:
+        #print("ERROR: There was a problem reading the file, is it in the correct format?")
+
+    fd.close()
+
+@command(name="export")
+def db_export(arg, selector):
+    # Bind database
+    session = dbbind()
+
+    # Get selection
+    selection = getselection(session, selector)
+
+    # Get file
+    if len(arg) >= 1 and arg[0] != "-":
+        fd = open(arg[0], "w")
+    else:
+        fd = sys.stdout
+
+    # Get format
+    if len(arg) >= 2:
+        format = arg[1]
+    else:
+        format = "csv"
+
+    # Export
+    if format == "csv":
+        csv_export(session, selection, fd)
+    elif format == "anidb":
+        anidb_export(session, selection, fd)
+
+    fd.close()
+
 # }}}
 
 # }}}
