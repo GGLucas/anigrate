@@ -301,14 +301,14 @@ Commands:
 
     import [file] [format] [category]
         Import a list of series to put in the database from a file.
-        If file is not specified the file will be read from stdin.
+        If file is not specified or is "-", the file will be read from stdin.
         If category is specified, all new series imported will be set
         to that category. This allows for easier organisation.
         See "Database Formats" for an explanation on how those work.
 
     export [file] [format]: [selector]
         Export a list of series from in the database to a file.
-        If file is not specified the file will be output to stdout.
+        If file is not specified or is "-", the file will be output to stdout.
         If a selector is given, only series matching that selector will be 
         exported.
         See "Database Formats" for an explanation on how those work.
@@ -2856,15 +2856,15 @@ def db_import(arg, selector):
         category = ""
 
     # Export
-    #try:
-    if format == "csv":
-        csv_import(session, fd, category)
-    elif format == "anidb":
-        anidb_import(session, fd, category)
-    elif format == "myanimelist":
-        mal_import(session, fd, category)
-    #except:
-        #print("ERROR: There was a problem reading the file, is it in the correct format?")
+    try:
+        if format == "csv":
+            csv_import(session, fd, category)
+        elif format == "anidb":
+            anidb_import(session, fd, category)
+        elif format == "myanimelist":
+            mal_import(session, fd, category)
+    except:
+        print("ERROR: There was a problem reading the file, is it in the correct format?")
 
     fd.close()
 
