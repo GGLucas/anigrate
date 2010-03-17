@@ -2662,7 +2662,7 @@ def anidb_import(session, fd, category):
             continue
 
         # Create series
-        series = Series(title=row[0], current=1)
+        series = Series(title=row[0], current=1, category=category)
         series.ctime = series.mtime = datetime.datetime.now()
         session.add(series)
 
@@ -2743,7 +2743,7 @@ def csv_import(session, fd, category):
             continue
 
         # Create the series
-        series = Series(title=row[0], current=season, rating=rating, duration=duration, dropped=dropped)
+        series = Series(title=row[0], current=season, rating=rating, duration=duration, dropped=dropped, category=category)
         series.ctime = series.mtime = datetime.datetime.now()
         session.add(series)
 
@@ -2806,7 +2806,7 @@ def mal_import(session, fd, category):
             continue
 
         # Create series
-        series = Series(title=title, current=1, rating=rating, dropped=dropped)
+        series = Series(title=title, current=1, rating=rating, dropped=dropped, category=category)
         series.ctime = series.mtime = datetime.datetime.now()
         session.add(series)
 
