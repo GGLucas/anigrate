@@ -1249,11 +1249,10 @@ def padstr(string, pad, right=False):
     string = str(string)
 
     # Padd
-    while len(string) < pad:
-        if right:
-            string = " "+string
-        else:
-            string = string+" "
+    if right:
+        string = " "*(pad-len(string))+string
+    else:
+        string = string+" "*(pad-len(string))
 
     return string
 # }}}
