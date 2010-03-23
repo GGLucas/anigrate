@@ -130,7 +130,10 @@ def main():
             selector_args = Selector(selector_args)
 
         # Run the command
-        func(selector_args, *func_args)
+        if selector_args:
+            func(selector_args, *func_args)
+        else:
+            func(*func_args)
 
     except sqlalchemy.exc.OperationalError:
         debug("Error: Unable to communicate with the database or access denied.")
