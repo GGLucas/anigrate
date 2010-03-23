@@ -47,7 +47,7 @@ class Selector(object):
         category_exact = False
 
         # Initial mode and sort
-        efault_mode = MODE[Config.get("anigrate", "default_mode")]
+        default_mode = MODE[Config.get("anigrate", "default_mode")]
         sort = Config.get("anigrate", "default_sort")
         mode = None
         sortdir = True

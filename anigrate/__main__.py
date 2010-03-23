@@ -86,7 +86,6 @@ def main():
         # Split arguments between function and selector
         func_args = []
         selector_args = []
-        print(args)
 
         # Check if a selector exists
         if [arg for arg in args if arg.endswith(":")]:
@@ -102,8 +101,6 @@ def main():
                     current.append(argument)
         else:
             func_args = args
-
-        print(func_args, selector_args)
 
         # Get command name
         command_name = func_args.pop(0)
