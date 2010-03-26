@@ -127,13 +127,19 @@ def main():
 
         # Check if we should prepare a selector
         if hasattr(func, "selector") and func.selector:
-            selector_args = Selector(selector_args)
+            selector_args = [Selector(selector_args)]
 
-        # Run the command
-        if selector_args:
-            func(selector_args, *func_args)
-        else:
-            func(*func_args)
+        # Append selector
+        func_args = selector_args + func_args
+
+        # Check for correct amount of arguments
+        if hasattr(func, "minargs") and func.minargs > len(func_args):
+            debug("Error: Too few arguments specified", raise_exception=False)
+        elif hasattr(func, "maxargs") and func.maxargs < len(func_args):
+            debug("Error: Too many arguments specified.", raise_exception=False)
+
+        # Call the function
+        func(*func_args)
 
     except sqlalchemy.exc.OperationalError:
         debug("Error: Unable to communicate with the database or access denied.")

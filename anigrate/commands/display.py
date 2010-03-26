@@ -1,6 +1,8 @@
-from anigrate.util import register, selector
+from anigrate.util import register, selector, arguments
+from anigrate.display.list import ListDisplay
 
 @register("info")
+@arguments(1)
 @selector
 def cm_info(selector):
     """
@@ -23,6 +25,7 @@ def cm_info(selector):
             ))
 
 @register("match")
+@arguments(1)
 @selector
 def cm_match(selector):
     """
@@ -34,3 +37,14 @@ def cm_match(selector):
     # Display header
     for sel in selector.all():
         print(sel.title)
+
+@register("list")
+@arguments(1)
+@selector
+def cm_list(selector):
+    """
+    list: [selector]
+        List all series matched by [selector].
+        If no selector is given, match all series.
+    """
+    ListDisplay(selector.all()).output()

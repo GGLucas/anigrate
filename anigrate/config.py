@@ -44,6 +44,8 @@ default_sort = split
 color_enabled=yes
 unicode_enabled=yes
 date_format=%a %d %b, %Y %| %H:%M
+list_columns = title,progress,season,rating
+list_column_sizes = 50,7,6,7
 
 [weblist]
 title_list=Watch List
@@ -61,6 +63,7 @@ tv=http://www.tv.com/search.php?qs=%s
 
 [color]
 normal=
+line=
 unknown=bold,magenta
 header=bold,yellow
 log_line=bold,black
@@ -87,13 +90,14 @@ Config.set("database", "uri", "sqlite:///"+Config.DB_LOCATION)
 Config.read([CONF_LOCATION, os.path.join(os.getcwd(), "anigraterc")])
 
 # Parse colors into escape codes
-if Config.get("appearance", "color_enabled"):
+if Config.getboolean("appearance", "color_enabled"):
     # Reset color
     Config.itemcolor["reset"] = "\033[0m"
 
     # Set all colors
     for item in Config.options("color"):
         attr = 0
+        color = 37
 
         # Get all attributes
         for elem in Config.get("color", item).split(","):

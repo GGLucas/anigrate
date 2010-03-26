@@ -59,8 +59,23 @@ def selector(func):
     func.selector = True
     return func
 
-def debug(error):
-    if Config.debug:
+def arguments(minargs=0, maxargs=None):
+    """
+        Specify the minimum and/or maximum amount of arguments
+        this function can take.
+    """
+    def cmd(func):
+        func.minargs = minargs
+        func.maxargs = minargs if maxargs is None else maxargs
+        return func
+    return cmd
+
+def debug(error, raise_exception=True):
+    """
+        Either print a stack trace when in debug mode or raise an error message.
+        If no stack trace is available, just raise the error.
+    """
+    if Config.debug and raise_exception:
         raise
     else:
         print(error)

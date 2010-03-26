@@ -9,9 +9,6 @@ Database:
     see the example anigraterc for all the other possibilities.
 
 Commands:
-    initdb
-        Initialise the database with all the necessary tables.
-
     list: [selector]
         List all series matched by [selector].
         If no selector is given, match all series.
@@ -86,11 +83,6 @@ Commands:
         of series matching [selector] have been watched. If no selector is
         given, show statistics about all series.
 
-
-    match: [selector]
-        Output a simple no-nonsense list of series matched by [selector],
-        useful for piping into other binaries. If no selector is given, match
-        all series.
 
 
     import [file] [format] [category]
