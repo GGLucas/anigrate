@@ -1,4 +1,7 @@
+import sys
 import os
+import codecs
+
 from ConfigParser import ConfigParser
 from StringIO import StringIO
 
@@ -26,26 +29,40 @@ Config.color = lambda elem, text: (
 )
 
 ## Color many bits of text and paste them together
-Config.multicolor = lambda *text: "".join(
-       text[i*2+1] if text[i*2] not in Config.itemcolor 
-       else Config.itemcolor[text[i*2]]+text[i*2+1]
-    for i in range(len(text)/2)
+Config.multicolor = lambda *text: "".join((
+       text if (i%2) else (
+         Config.itemcolor[text]
+          if text in Config.itemcolor else
+         ""
+       )
+    for i, text in enumerate(text))
 )
 
 # Set defaults
 Config.readfp(StringIO("""
 [anigrate]
-default_mode = prefix
-default_sort = split
+default_mode=prefix
+default_sort=split
+default_log_limit=0
 
 [database]
 
 [appearance]
 color_enabled=yes
 unicode_enabled=yes
-date_format=%a %d %b, %Y %| %H:%M
-list_columns = title,progress,season,rating
-list_column_sizes = 50,7,6,7
+
+date_format=%a %d %b, %Y
+time_format=%H:%M
+old_cutoff=14
+log_reversed=yes
+
+list_columns=title,progress,season,rating
+list_column_sizes=50,7,6,7
+
+log_columns=episode,date,time
+log_column_sizes=50,16,7
+
+default_column_size=10
 
 [weblist]
 title_list=Watch List
@@ -72,6 +89,12 @@ series_watching=bold,blue
 series_dropped=bold,red
 seasonnum=bold,magenta
 epcount=bold,blue
+date_new=bold,green
+date_old=
+time_new=bold,green
+time_old=
+log_new=bold,green
+log_old=
 score_top=bold,green
 score_high=green
 score_normal=white
@@ -109,3 +132,9 @@ if Config.getboolean("appearance", "color_enabled"):
         # Build escape code
         Config.itemcolor[item] = "\033[%d;%dm" % (attr, color)
 
+
+# Check if UTF-8 should be enabled
+if Config.getboolean("appearance", "unicode_enabled"):
+    # Force stdout and stderr to use utf-8
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr)

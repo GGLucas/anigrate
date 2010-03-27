@@ -80,3 +80,19 @@ def debug(error, raise_exception=True):
     else:
         print(error)
         sys.exit(1)
+
+def checkint(var, name=""):
+    """
+        Check if a variable is parseable as an integer.
+        Return the integer if it is or display an error if it's not.
+    """
+    # If it's none, pass through
+    if var is None:
+        return None
+
+    # Try to convert to int
+    try:
+        return int(var)
+    except ValueError:
+        print("Error: %s is not a valid integer." % name)
+        sys.exit(1)

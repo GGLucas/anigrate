@@ -2,6 +2,8 @@ from anigrate.models import Series
 from anigrate.config import Config
 from anigrate.util import choose
 
+from sqlalchemy.orm import eagerload
+
 SORT = {
     "rating":   [(Series.rating, "desc")],
     "activity": [(Series.mtime, "desc")],
@@ -142,3 +144,6 @@ class Selector(object):
 
     def all(self):
         return self.query.all()
+
+    def log_all(self):
+        return self.query.options(eagerload('watched')).all()

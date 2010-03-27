@@ -1,5 +1,8 @@
-from anigrate.util import register, selector, arguments
-from anigrate.display.list import ListDisplay
+from __future__ import print_function
+
+from anigrate.util import register, selector, arguments, checkint
+from anigrate.display.serieslist import ListDisplay
+from anigrate.display.loglist import LogDisplay
 
 @register("info")
 @arguments(1)
@@ -16,7 +19,7 @@ def cm_info(selector):
 
         ie. each item is separated by a tab character for easy parsing.
     """
-
+    # Display info about matches
     for series in selector.all():
         print("%s\t%d\t%d\t%d\t%d" % (
                series.title, series.epscurrent,
@@ -34,7 +37,7 @@ def cm_match(selector):
         useful for piping into other binaries. If no selector is given, match
         all series.
     """
-    # Display header
+    # Display matched
     for sel in selector.all():
         print(sel.title)
 
@@ -47,4 +50,18 @@ def cm_list(selector):
         List all series matched by [selector].
         If no selector is given, match all series.
     """
-    ListDisplay(selector.all()).output()
+    ListDisplay(selector=selector).output(print=lambda text: print("  "+text))
+
+@register("log")
+@arguments(1, 2)
+@selector
+def cm_log(selector, limit=None):
+    """
+    log [limit]: [selector]
+        Show a detailed log for series matching [selector].
+        If limit is specified, limit the amount of log entries shown per
+        matched series to that number.
+    """
+    limit = checkint(limit, "limit argument")
+
+    LogDisplay(selector=selector, limit=limit).output(print=lambda text: print("  "+text))
