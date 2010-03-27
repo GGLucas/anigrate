@@ -1,123 +1,59 @@
+import sys
 
+from anigrate.config import Config
+from anigrate.util import register, arguments, Commands, Commands_Order, choose
 
-HELPTEXT = """
-Usage: %s [COMMAND] [ARGS...]: [SELECTOR]
+@register("help", shorthelp="display help text")
+@arguments(0, 1)
+def cm_help(command=None):
+    """
+        help
+            Display a help information screen listing all the commands and options.
+    """
+
+    if not command:
+        ## Print help header
+        # Help header
+        print("""
+Usage: %(command)s [COMMAND] [ARGS...]: [SELECTOR]
 Manage a list of watched anime or television series.
 
 Database:
     By default anigrate uses an sqlite database in $HOME/.anigrate/db,
     see the example anigraterc for all the other possibilities.
 
-Commands:
-    list: [selector]
-        List all series matched by [selector].
-        If no selector is given, match all series.
+Commands: 
+    See `%(command)s help $command` for extended information about the arguments
+    and usage of a specific command. The following commands are available:
+""" % {"command":sys.argv[0]})
+        # List all commands
+        for name in Commands_Order:
+            func = Commands[name]
+            print("    "+name.ljust(16)+
+            (func.shorthelp if hasattr(func, "shorthelp") else ""))
 
-    log: (selector)
-        Show a detailed log for series matching (selector).
+        print("""
+Selectors:
+    See `%(command)s help selectors` for detailed information on how to use 
+    selectors and what the items mean. The following items are supported:
 
-    hist [num]: [selector]
-        Show the last [num] watched episode entries for series matching
-        [selector]. Num defaults to 15, matches all series if no selector
-        is specified.
+    +finished, +completed, +watching, +dropped, +undropped
+      filter on this state
+    =<category>
+      filter on this category
+    %%exact, %%contains, %%suffix, %%prefix
+      set match mode
+    @rating, @activity, @watched, @title, @split
+      set sort mode
 
-    add [category] [watched[/total][*seasons]] [rating] [duration]: (name)
-        Add a new series entry with name specified by (name).
-        Optionally, you can specify the category, duration, amount of episodes
-        watched, amount of episodes total, amount of seasons and rating.
+Import/Export Formats:
+    For extended information on available database import and export formats, 
+    see `%(command)s help dbformat`. The following formats are available:
 
-        Note that if you specify to create multiple seasons, every season will
-        have the same watched and total amounts you specified here.
-
-    category [category]: (selector)
-        Mark all series matched by (selector) as having category [category].
-
-    remove: (selector)
-        Completely remove any series that match (selector).
-
-    rate <score>: (selector)
-        Rate all series matched by (selector) with <score>.
-
-    [un]drop: (selector)
-        Mark all series matched by (selector) as dropped or not dropped.
-
-    length <length>: (selector)
-        Set the active season's length in episodes.
-
-    duration <time>: (selector)
-        Set the average duration of an episode in series matching (selector).
-        This is used to calculate total watching time, defaults to 24 minutes
-        per episode for every series.
-
-    time: [selector]
-        Get the total watching time spent on series matching [selector].
-        If no selector is given the total time for all series is given.
-
-    watch [num]: (selector)
-        Change the episodes watched count. Without [num] specified it will be
-        incremented by one. Using specifiers like "+3" or "-2" you can increment
-        or decrement the watched count by that number. Specifying an absolute
-        number will watch up to that episode or remove everything from that
-        episode on. Watch always uses the currently active season.
-
-    season add [watched[/total]] [num]: (selector)
-        Add a new season, if num is specified the season number is set to that, 
-        otherwise it will default to one more than the previous season.
-
-        Optionally, you can specify the watched/total episode amounts to be set 
-        for this season.
-
-    season remove [num]: (selector)
-        Remove the season with number [num] from a series. If num is not
-        specified the currently active season will be removed.
-
-    season length <season> <length>: (selector)
-        Set a season's length in episodes.
-
-    season active <num>: (selector)
-        Set season with number <num> as the active season. Can be a relative 
-        offset like +1 or -2.
-
-    stats: [selector]
-        Show a list of various statistics about the times and dates episodes
-        of series matching [selector] have been watched. If no selector is
-        given, show statistics about all series.
-
-
-
-    import [file] [format] [category]
-        Import a list of series to put in the database from a file.
-        If file is not specified or is "-", the file will be read from stdin.
-        If category is specified, all new series imported will be set
-        to that category. This allows for easier organisation.
-        See "Database Formats" for an explanation on how those work.
-
-    export [file] [format]: [selector]
-        Export a list of series from in the database to a file.
-        If file is not specified or is "-", the file will be output to stdout.
-        If a selector is given, only series matching that selector will be 
-        exported.
-        See "Database Formats" for an explanation on how those work.
-
-
-    runserver [type] [host] [port]
-        Run a server displaying an html public list on [host] (default: localhost)
-        and [port] (default: 4310). Type is set to "http" by default and will 
-        host a simple http webserver not meant to be used in production. If 
-        flup is installed, you can additionally specify [type] to be "fcgi", 
-        "scgi" or "ajp" and it will host a server with that protocol.
-
-        Note that the main anigrate binary can also be used as a wsgi script 
-        and it will display the same html public list.
-
-        You can specify any selector to display a list for in the address by 
-        separating the terms with slashes. For example:
-
-            http://localhost:4310/=anime/+watching/@title
-
-    help
-        Show this help message.
-
+    csv, anidb, myanimelist
+""" % {"command":sys.argv[0]})
+    elif command == "selectors":
+        print("""
 Selectors:
     Selectors are used to find series to act upon. In its most basic form, a 
     selector is simply the name of a series or the beginning of a name of a 
@@ -131,16 +67,16 @@ Selectors:
     =<category>
         Will only match series in the specified category.
 
-    %%exact
+    %exact
         When specified, only match series that exactly match the full selector.
 
-    %%contains
+    %contains
         When specified, match all series containing the selector.
 
-    %%suffix
+    %suffix
         When specified, match all series that end with the selector.
 
-    %%prefix
+    %prefix
         Default behaviour: match all series that start with the selector.
 
     @rating, @activity, @watched, @title
@@ -151,6 +87,10 @@ Selectors:
         Default sort method, sorts by activity but splits into watching,
         finished and dropped groups first.
 
+""")
+    elif command == "dbformat":
+        # Database format help.
+        print("""
 Database Formats:
     Database formats are used to determine how to read or write series
     from or to a file, the following format specifiers are available:
@@ -166,47 +106,24 @@ Database Formats:
         When importing from myanimelist be sure to uncompress it before feeding
         it to anigrate; you can use pipes for this. For example:
           $ gunzip -c animelist_0000_-_0000.xml.gz | anigrate import - myanimelist
+""")
+    else:
+        ## Print help about one command
+        cmd = choose(Commands, command, value_only=True)
+        if cmd:
+            for func in cmd:
+                print(func.__doc__)
+        else:
+            print("Help subject `%s` not found." % command)
 
-Examples:
-    Here are some example use cases, note that every selector specifier or 
-    command can be shortened to its smallest non-ambiguous prefix.
-
-    anigrate list
-        List all series in the database.
-
-    anigrate li: =anime
-        List all series in category "anime".
-
-    anigrate li: +w
-        List only series currently being watched.
-
-    anigrate list: +c @r
-        List all completed series sorted by the rating given.
-
-    anigrate add anime: Mushishi
-        Add a new series in category "anime" with name "Mushishi".
-
-    anigrate watch: Mushishi
-        Increment the watched count on the "Mushishi" series by one.
-
-    anigrate w +3: Mus
-        Increment the watched count by three on series prefixed by "Mus".
-        ie. This command would match "Mus[shishi]" and thus increment
-        that by three.
-
-    anigrate season add: Mushishi
-        Add a new season to series "Mushishi".
-
-    anigrate se act 1: Mushishi
-        Set season "1" as the active season on series "Mushishi".
-
-    anigrate length 26: Mushishi
-        Set the currently active season on series "Mushishi" as being
-        26 episodes long.
-"""
-
-VERSIONTEXT = """Anigrate """+str(Config.ANIGRATE_VERSION)+
-              """ <"""+Config.ANIGRATE_URI+""">
-
-Copyright (C) 2009-2010 Lucas de Vries <lucas@glacicle.org>
-License WTFPL: <http://sam.zoy.org/wtfpl>"""
+@register("version", shorthelp="display version information")
+@arguments(0)
+def cm_version():
+    """
+        version
+            Display anigrate version and copyright information.
+    """
+    print('Anigrate '+str(Config.ANIGRATE_VERSION)+
+          ' <'+Config.ANIGRATE_URI+'>\n'
+          'Copyright (C) 2009-2010 Lucas de Vries <lucas@glacicle.org>\n'
+          'License WTFPL: <http://sam.zoy.org/wtfpl>\n')

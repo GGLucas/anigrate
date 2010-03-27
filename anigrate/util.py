@@ -3,6 +3,7 @@ import sys
 from anigrate.config import Config
 
 Commands = {}
+Commands_Order = []
 Commands_Season = {}
 
 def choose(values, name, first_only=False, key_only=False,
@@ -34,20 +35,31 @@ def choose(values, name, first_only=False, key_only=False,
     else:
         return match
 
-def register(name=None, dictionary=None):
+def register(name=None, dictionary=None, sortorder=None, **kwargs):
     """
         Register a function as a command.
     """
     def cmd(func):
         # Get dictionary to add this command to
-        if not dictionary:
-            global Commands
+        if dictionary is None:
+            global Commands, Commands_Order
             cm = Commands
+            order = Commands_Order
         else:
             cm = dictionary
+            order = sortorder
+
+        # Set extra function properties
+        for key, value in kwargs.items():
+            setattr(func, key, value)
 
         # Set command in the dictionary
         cm[name or func.__name__] = func
+
+        # Append to sort order
+        if order is not None:
+            order.append(name or func.__name__)
+
         return func
 
     return cmd

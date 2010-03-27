@@ -1,7 +1,7 @@
 from anigrate.util import register, selector
 from anigrate.models import Base
 
-@register("initialise")
+@register("initialise", shorthelp="initialise the series database")
 def initialise():
     """
     initialise

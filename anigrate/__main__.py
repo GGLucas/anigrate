@@ -26,11 +26,23 @@ def setopt(option, opt, value, parser):
 
             Config.set(section, option, value)
 
+def showhelp(option, opt_str, value, parser):
+    """
+        Switch to help command.
+    """
+    parser.largs.insert(0, "help")
+
+def showversion(option, opt_str, value, parser):
+    """
+        Switch to version command.
+    """
+    parser.largs.insert(0, "version")
+
 def parse_args():
     """
         Parse options from the commandline
     """
-    parser = OptionParser()
+    parser = OptionParser(add_help_option=False)
 
     # Specific configuration file
     parser.add_option("-c", "--config", dest="config")
@@ -42,7 +54,13 @@ def parse_args():
     parser.add_option("-d", "--debug", action="store_true")
 
     # Change config option(s)
-    parser.add_option("-s", "--set", action="callback", callback=setopt, type=str)
+    parser.add_option("-s", "--set", action="callback", callback=setopt)
+
+    # Display help
+    parser.add_option("-h", "--help", action="callback", callback=showhelp)
+
+    # Display version
+    parser.add_option("-v", "--version", action="callback", callback=showversion)
 
     # Parse
     options, args = parser.parse_args()
