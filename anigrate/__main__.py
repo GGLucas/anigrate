@@ -54,7 +54,7 @@ def parse_args():
     parser.add_option("-d", "--debug", action="store_true")
 
     # Change config option(s)
-    parser.add_option("-s", "--set", action="callback", callback=setopt)
+    parser.add_option("-s", "--set", action="callback", callback=setopt, type=str)
 
     # Display help
     parser.add_option("-h", "--help", action="callback", callback=showhelp)

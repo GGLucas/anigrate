@@ -18,10 +18,6 @@ def cm_help(command=None):
 Usage: %(command)s [COMMAND] [ARGS...]: [SELECTOR]
 Manage a list of watched anime or television series.
 
-Database:
-    By default anigrate uses an sqlite database in $HOME/.anigrate/db,
-    see the example anigraterc for all the other possibilities.
-
 Commands: 
     See `%(command)s help $command` for extended information about the arguments
     and usage of a specific command. The following commands are available:
@@ -45,6 +41,21 @@ Selectors:
       set match mode
     @rating, @activity, @watched, @title, @split
       set sort mode
+
+Switches:
+    The following command-line switches are available to be specified.
+    
+      -c, --config=CONFIG        load file CONFIG instead of the default 
+                                   configuration file location
+      -b, --database=URI         use database connection URI instead of the
+                                   database specified in the configuration
+      -d, --debug                enable debug mode, this displays python stack 
+                                   traces when errors occur
+      -s, --set=section.option=value   set a configuration option
+
+Database:
+    By default anigrate uses an sqlite database in $HOME/.anigrate/db,
+    see the example anigraterc for other possibilities.
 
 Import/Export Formats:
     For extended information on available database import and export formats, 
