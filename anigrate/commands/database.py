@@ -5,6 +5,9 @@ from anigrate.models import Base
 def initialise():
     """
     initialise
-        Initialise the database with all the necessary tables.
+        Initialise the database with all the necessary tables. Note that this
+        is only necessary for client/server databases like mysql. If an sqlite
+        database is used (which it is by default), anigrate automatically 
+        creates it for you.
     """
     Base.metadata.create_all()
