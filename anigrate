@@ -2553,7 +2553,7 @@ def hist(arg, selector):
     if selector:
         selection = getselection(session, selector, list=False).subquery()
         q = q.join((selection, Watched.series_id == selection.c.id))
-    
+
     # Sort
     q = q.filter(Series.id == Watched.series_id)
     q = q.order_by(Watched.time.desc())
@@ -2746,14 +2746,14 @@ def csv_import(session, fd, category):
         series.ctime = series.mtime = datetime.datetime.now()
         session.add(series)
 
-        season = Season(num=current, series=series,
+        seasonobj = Season(num=season, series=series,
             episode_total=total, current_watched=current)
-        session.add(season)
+        session.add(seasonobj)
 
         if current > 0:
-            watched = Watched(series=series, season=season,
+            watched = Watched(series=series, season=seasonobj,
                     time=datetime.datetime.now(), startep=0,
-                    finishep=current, seasonnum=current)
+                    finishep=current, seasonnum=season)
             session.add(watched)
 
         series.eval_finished()
