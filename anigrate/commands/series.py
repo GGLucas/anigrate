@@ -127,3 +127,99 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
     series.eval_finished()
 
     Session.commit()
+
+@register("category", shorthelp="set series category")
+@arguments(1, 2)
+@selector
+def cm_category(selector, value=None):
+    """
+    category [category]: (selector)
+        Mark all series matched by (selector) as having category [category].
+    """
+    ## TODO: If selector is empty, show incremental switch
+
+    for series in selector.all():
+        orig = series.category
+
+        # Prompt if not given
+        if value is None:
+            new = promptfor("Enter new category for series `%s`" % 
+            series.title, orig, True)
+        else:
+            new = value
+
+        series.category = new
+
+    Session.commit()
+
+@register("rate", shorthelp="set series rating")
+@arguments(1, 2)
+@selector
+def cm_rate(selector, value=None):
+    """
+    rate [score]: [selector]
+        Rate all series matched by [selector] with [score].
+    """
+    ## TODO: If selector is empty, show incremental switch
+
+    if value is not None:
+        value = checkint(value, "rating")
+
+    for series in selector.all():
+        orig = series.rating
+
+        # Prompt if not given
+        if value is None:
+            # Prompt
+            new = promptfor("Enter new rating for series `%s`" % 
+            series.title, orig, True)
+
+            # Convert to number
+            if new == "":
+                new = orig
+            else:
+                new = checkint(new, "rating", exit=False)
+                continue
+        else:
+            new = value
+
+        series.rating = new
+
+    Session.commit()
+
+@register("duration", shorthelp="set series duration")
+@arguments(1, 2)
+@selector
+def cm_duration(selector, value=None):
+    """
+    duration [time]: [selector]
+        Set the average duration of an episode in series matching [selector].
+        This is used to calculate total watching time, defaults to 24 minutes
+        per episode for every series.
+    """
+    ## TODO: If selector is empty, show incremental switch
+
+    if value is not None:
+        value = checkint(value, "duration")
+
+    for series in selector.all():
+        orig = series.duration
+
+        # Prompt if not given
+        if value is None:
+            # Prompt
+            new = promptfor("Enter new duration for series `%s`" % 
+            series.title, orig, True)
+
+            # Convert to number
+            if new == "":
+                new = orig
+            else:
+                new = checkint(new, "duration", exit=False)
+                continue
+        else:
+            new = value
+
+        series.duration = new
+
+    Session.commit()

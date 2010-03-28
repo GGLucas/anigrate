@@ -75,7 +75,7 @@ class Selector(object):
                                              value_only=True)
             elif opt[0] == "@":
                 # Change sort
-                if opt[1] == "-":
+                if len(opt) > 1 and opt[1] == "-":
                     # Inverted sort
                     sort = choose(SORT, opt[2:], allow_multi=False,
                                                  value_only=True)
@@ -87,7 +87,7 @@ class Selector(object):
                     sortdir = True
             elif opt[0] == "=":
                 # Change category
-                if opt[1] == "%":
+                if len(opt) > 1 and opt[1] == "%":
                     # Exact match
                     category = opt[2:]
                     category_exact = True

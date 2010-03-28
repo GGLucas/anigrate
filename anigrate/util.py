@@ -100,7 +100,7 @@ def debug(error, raise_exception=True):
         print(error)
         sys.exit(1)
 
-def checkint(var, name=""):
+def checkint(var, name="", exit=True):
     """
         Check if a variable is parseable as an integer.
         Return the integer if it is or display an error if it's not.
@@ -114,9 +114,9 @@ def checkint(var, name=""):
         return int(var)
     except ValueError:
         print("Error: %s is not a valid integer." % name)
-        sys.exit(1)
+        if exit: sys.exit(1)
 
-def promptfor(prompt, default=None):
+def promptfor(prompt, default=None, allow_empty=False):
     """
         Prompt for a value to be entered, or use a default.
     """
@@ -128,7 +128,7 @@ def promptfor(prompt, default=None):
         value = raw_input("%s: " % prompt)
 
     # Set default
-    if not value and default:
+    if not value and default and not allow_empty:
         value = default
 
     return value
