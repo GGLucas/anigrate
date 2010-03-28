@@ -144,11 +144,13 @@ def main():
         func = commands[0][1]
 
         # Check if we should prepare a selector
-        if hasattr(func, "selector") and func.selector:
-            selector_args = [Selector(selector_args)]
+        if hasattr(func, "selector"):
+            if func.selector == 1:
+                selector_args = Selector(selector_args)
+            elif func.selector == 2:
+                selector_args = " ".join(selector_args)
 
-        # Append selector
-        func_args = selector_args + func_args
+            func_args.insert(0, selector_args)
 
         # Check for correct amount of arguments
         if hasattr(func, "minargs") and func.minargs > len(func_args):

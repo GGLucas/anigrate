@@ -68,7 +68,14 @@ def selector(func):
     """
         Mark function as requiring a prepared selector.
     """
-    func.selector = True
+    func.selector = 1
+    return func
+
+def selector_literal(func):
+    """
+        Mark function as requiring a literal selector.
+    """
+    func.selector = 2
     return func
 
 def arguments(minargs=0, maxargs=None):
@@ -108,3 +115,20 @@ def checkint(var, name=""):
     except ValueError:
         print("Error: %s is not a valid integer." % name)
         sys.exit(1)
+
+def promptfor(prompt, default=None):
+    """
+        Prompt for a value to be entered, or use a default.
+    """
+
+    # Prompt
+    if default is not None:
+        value = raw_input("%s [%s]: " % (prompt, default))
+    else:
+        value = raw_input("%s: " % prompt)
+
+    # Set default
+    if not value and default:
+        value = default
+
+    return value

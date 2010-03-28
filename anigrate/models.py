@@ -50,6 +50,16 @@ class Series(Base):
         return self.title
     __repr__ = __str__ = __unicode__
 
+    @classmethod
+    def exists(cls, title, category):
+        return bool(
+            Series.query.filter(
+                Series.title.ilike(title)
+            ).filter(
+                Series.category.ilike(category)
+            ).count()
+        )
+
     @property
     def current_season(self):
         return self.season_bynum(self.current)
