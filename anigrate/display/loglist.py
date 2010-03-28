@@ -136,6 +136,7 @@ class LogDisplay(ListDisplay):
                     color=None,
                     color_line="log_line",
                     hsep=(i != self.log_column_count-1),
+                    offset=(2 if i==0 else 0),
                 )
 
         # Vertical separator

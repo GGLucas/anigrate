@@ -65,6 +65,7 @@ class ListDisplay(Display):
                 self.column_sizes[i],
                 color="header",
                 hsep=(i != self.column_count-1),
+                offset=int(i == 0),
             )
 
         return line
@@ -113,6 +114,7 @@ class ListDisplay(Display):
                 self.column_sizes[i],
                 color=None,
                 hsep=(i != self.column_count-1),
+                offset=int(i == 0),
             )
 
         return line

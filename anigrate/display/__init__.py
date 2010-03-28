@@ -28,7 +28,7 @@ class Display(object):
         """
         return datetime.strftime(Config.get("appearance", "time_format"))
 
-    def _column(self, text, size, color="normal", color_line="line", hsep=True):
+    def _column(self, text, size, color="normal", color_line="line", hsep=True, offset=0):
         """
             Format a string to represent a column
         """
@@ -42,6 +42,11 @@ class Display(object):
         # Insert our color
         if color:
             text.insert(0, color)
+
+        # Check for column offset
+        if offset:
+            text.insert(0, " "*offset)
+            text.insert(0, "normal")
 
         # Check for text length matching up to column size
         total_length = 0
