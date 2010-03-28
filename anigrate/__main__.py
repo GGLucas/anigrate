@@ -131,7 +131,8 @@ def main():
             print("Error: command %s does not exist." % command_name)
             sys.exit(1)
         if len(commands) > 1:
-            print("Command %s is ambiguous, the following are available:")
+            print("Command `%s` is ambiguous, the following are available:" 
+                     % command_name)
 
             # Print available commands
             for cmd in commands:

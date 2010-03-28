@@ -223,3 +223,39 @@ def cm_duration(selector, value=None):
         series.duration = new
 
     Session.commit()
+
+@register("remove", shorthelp="delete a series entry")
+@arguments(1)
+@selector
+def cm_remove(selector):
+    """
+    remove: [selector]
+        Completely remove any series that match [selector].
+
+    """
+    count = selector.count()
+    if count > 1:
+        # Prompt for confirmation
+        prompt = raw_input("You are about to delete %d series, are you"
+        " absolutly sure [yes/NO]? " % count).lower()
+
+        if prompt != "yes":
+            if "yes".startswith(prompt):
+                print("Please type 'yes' completely at the prompt.")
+            return
+
+    for series in selector.all():
+        # Delete series info
+        Session.delete(series)
+
+        # Delete watch log
+        Watched.query.filter(
+            Watched.series == series
+        ).delete()
+
+        # Delete seasons
+        Season.query.filter(
+            Season.series == series
+        ).delete()
+
+    Session.commit()

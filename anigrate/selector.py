@@ -142,6 +142,9 @@ class Selector(object):
     def __repr__(self):
         return str(self.query)
 
+    def count(self):
+        return self.query.count()
+
     def all(self):
         return self.query.all()
 
