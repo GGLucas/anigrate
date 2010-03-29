@@ -7,8 +7,8 @@ from anigrate.util import register, arguments, Commands, Commands_Order, choose
 @arguments(0, 1)
 def cm_help(command=None):
     """
-        help
-            Display a help information screen listing all the commands and options.
+    help
+        Display a help information screen listing all the commands and options.
     """
 
     if not command:
@@ -23,7 +23,7 @@ Commands:
     and usage of a specific command.
 
     You can use the shortest unambiguous form to specify each of these commands
-    (for example "li" will suffice for "list" and both "h" and "hist" will
+    (for example "li" will suffice for "list" and both "hi" and "hist" will
     suffice for "history").
 
     Positional arguments can be set to a single period character (".") in order
