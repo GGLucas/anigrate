@@ -133,6 +133,10 @@ Database Formats:
         it to anigrate; you can use pipes for this. For example:
           $ gunzip -c animelist_0000_-_0000.xml.gz | anigrate import - myanimelist
 """)
+    elif command == "commands":
+        for name in Commands_Order:
+            func = Commands[name]
+            print(func.__doc__.lstrip("\n"))
     else:
         ## Print help about one command
         cmd = choose(Commands, command, value_only=True)

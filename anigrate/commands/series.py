@@ -229,7 +229,6 @@ def cm_remove(selector):
     """
     remove: [selector]
         Completely remove any series that match [selector].
-
     """
     count = selector.count()
     if count > 1:
