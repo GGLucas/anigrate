@@ -128,7 +128,7 @@ def promptfor(prompt, default=None, allow_empty=False):
         value = raw_input("%s: " % prompt)
 
     # Set default
-    if not value and default and not allow_empty:
+    if value == "." or (not value and default and not allow_empty):
         value = default
 
     return value
