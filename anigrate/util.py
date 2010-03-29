@@ -115,6 +115,7 @@ def checkint(var, name="", exit=True):
     except ValueError:
         print("Error: %s is not a valid integer." % name)
         if exit: sys.exit(1)
+        else: return None
 
 def promptfor(prompt, default=None, allow_empty=False):
     """

@@ -181,7 +181,7 @@ def cm_rate(selector, value=None):
                 new = orig
             else:
                 new = checkint(new, "rating", exit=False)
-                continue
+                if new == None: continue
         else:
             new = value
 
