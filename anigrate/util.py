@@ -89,6 +89,37 @@ def arguments(minargs=0, maxargs=None):
         return func
     return cmd
 
+def paranoia(level, verb="modify", count=1, complete=False):
+    """
+        Specify the paranoia level on this function. If the function
+        paranoia is higher than the configured paranoia, alert the user
+        when the function will act on more than [count] items.
+    """
+    system = "[yes/NO]" if complete else "[y/N]"
+
+    def decor(func):
+        def cmd(*args, **kwargs):
+            if Config.getint("anigrate", "paranoia") >= level:
+                selector = args[0]
+                amount = selector.count()
+
+                if amount > count:
+                    prompt = raw_input("You are about to %s %d series, are you"
+                    " absolutely sure %s? " % (verb, amount, system)).lower()
+
+                    if complete:
+                        if prompt != "yes":
+                            if prompt and "yes".startswith(prompt):
+                                print("Please type 'yes' completely at the prompt.")
+                            return
+                    elif not "yes".startswith(prompt):
+                            return
+            func(*args, **kwargs)
+        cmd.__name__ = func.__name__
+        cmd.__doc__ = func.__doc__
+        return cmd
+    return decor
+
 def debug(error, raise_exception=True):
     """
         Either print a stack trace when in debug mode or raise an error message.

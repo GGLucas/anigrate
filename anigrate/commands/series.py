@@ -1,7 +1,9 @@
 import datetime
 
 from anigrate.models import Session, Series, Season, Watched
-from anigrate.util import register, selector, selector_literal, arguments, promptfor, debug, checkint, verbose
+from anigrate.util import (register, selector, selector_literal,
+                   arguments, promptfor, debug, checkint, verbose,
+                   paranoia)
 
 @register("add", shorthelp="add a new series")
 @arguments(0, 5)
@@ -131,6 +133,7 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
 @register("category", shorthelp="set series category")
 @arguments(1, 2)
 @selector
+@paranoia(2)
 def cm_category(selector, value=None):
     """
     category [category]: (selector)
@@ -158,6 +161,7 @@ def cm_category(selector, value=None):
 @register("rate", shorthelp="set series rating")
 @arguments(1, 2)
 @selector
+@paranoia(2)
 def cm_rate(selector, value=None):
     """
     rate [score]: [selector]
@@ -195,6 +199,7 @@ def cm_rate(selector, value=None):
 @register("duration", shorthelp="set series duration")
 @arguments(1, 2)
 @selector
+@paranoia(2)
 def cm_duration(selector, value=None):
     """
     duration [time]: [selector]
@@ -234,6 +239,7 @@ def cm_duration(selector, value=None):
 @register("drop", shorthelp="mark a series as dropped")
 @arguments(1)
 @selector
+@paranoia(2, verb="drop")
 def cm_drop(selector):
     """
     drop: [selector]
@@ -250,6 +256,7 @@ def cm_drop(selector):
 @register("undrop", shorthelp="mark a series as not dropped")
 @arguments(1)
 @selector
+@paranoia(2, verb="undrop")
 def cm_drop(selector):
     """
     undrop: [selector]
@@ -266,22 +273,12 @@ def cm_drop(selector):
 @register("remove", shorthelp="delete a series entry")
 @arguments(1)
 @selector
+@paranoia(1, verb="remove", complete=True)
 def cm_remove(selector):
     """
     remove: [selector]
         Completely remove any series that match [selector].
     """
-    count = selector.count()
-    if count > 1:
-        # Prompt for confirmation
-        prompt = raw_input("You are about to delete %d series, are you"
-        " absolutly sure [yes/NO]? " % count).lower()
-
-        if prompt != "yes":
-            if "yes".startswith(prompt):
-                print("Please type 'yes' completely at the prompt.")
-            return
-
     for series in selector.all():
         # Delete series info
         Session.delete(series)

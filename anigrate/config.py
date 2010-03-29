@@ -45,6 +45,7 @@ default_mode=prefix
 default_sort=split
 default_log_limit=0
 default_hist_limit=20
+paranoia=1
 
 [database]
 
