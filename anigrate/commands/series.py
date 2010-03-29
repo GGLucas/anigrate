@@ -162,8 +162,7 @@ def cm_rate(selector, value=None):
     """
     ## TODO: If selector is empty, show incremental switch
 
-    if value is not None:
-        value = checkint(value, "rating")
+    value = checkint(value, "rating")
 
     for series in selector.all():
         orig = series.rating
@@ -199,8 +198,7 @@ def cm_duration(selector, value=None):
     """
     ## TODO: If selector is empty, show incremental switch
 
-    if value is not None:
-        value = checkint(value, "duration")
+    value = checkint(value, "duration")
 
     for series in selector.all():
         orig = series.duration

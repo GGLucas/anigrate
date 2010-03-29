@@ -31,19 +31,6 @@ class ListDisplay(Display):
               [Config.getinteger("appearance","default_column_size")]*
               (self.column_count-sizes))
 
-    def _rating_color(self, rating):
-        """
-            Get the color to display for a certain rating.
-        """
-        return [
-                "unknown", "score_critical",
-                "score_critical", "score_critical",
-                "score_low", "score_low",
-                "score_normal", "score_normal",
-                "score_high", "score_high",
-                "score_top",
-            ][rating]
-
     def header(self):
         """
             Generate the header line to display above the table.
@@ -74,7 +61,7 @@ class ListDisplay(Display):
         """
             Generate the footer line to display below the table.
         """
-        return Config.color("normal", "%d series displayed." % len(self.series))
+        return Config.color("normal", " %d series displayed." % len(self.series))
 
 
     def line(self, series):
@@ -110,7 +97,7 @@ class ListDisplay(Display):
         # List columns in string
         for i, column in enumerate(self.columns):
             line += self._column(
-                Columns[column] if column in Columns else "???",
+                Columns[column] if column in Columns else (series_color, "???"),
                 self.column_sizes[i],
                 color=None,
                 hsep=(i != self.column_count-1),
@@ -118,7 +105,6 @@ class ListDisplay(Display):
             )
 
         return line
-
 
     def output(self, print=print):
         """

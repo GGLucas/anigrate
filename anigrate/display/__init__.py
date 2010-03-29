@@ -102,3 +102,74 @@ class Display(object):
             return Config.color(color, line)
         else:
             return ""
+
+    def _rating_color(self, rating):
+        """
+            Get the color to display for a certain rating.
+        """
+        return [
+                "unknown", "score_critical",
+                "score_critical", "score_critical",
+                "score_low", "score_low",
+                "score_normal", "score_normal",
+                "score_high", "score_high",
+                "score_top",
+            ][rating]
+
+    def _progress(self, season, episode, color="normal"):
+        """
+            Get a list of color+text for the progress column.
+        """
+        text = Config.get("appearance", "progress_format")
+        season = str(season)
+        episode = str(episode)
+        before = ""
+
+        if "%S" in text:
+            before, text = text.split("%S", 1)
+
+            if "%E" in before:
+                before, after = before.split("%E", 1)
+                output = (
+                    color, before,
+                    "epcount", episode,
+                    color, after,
+                    "seasonnum", season,
+                    color, text
+                )
+            elif "%E" in text:
+                after, text = text.split("%E", 1)
+                output = (
+                    color, before,
+                    "seasonnum", season,
+                    color, after,
+                    "epcount", episode,
+                    color, text
+                )
+            else:
+                output = (
+                    color, before,
+                    "seasonnum", season,
+                    color, text
+                )
+        else:
+            if "%E" in text:
+                before, text = text.split("%E", 1)
+                output = (
+                    color, before,
+                    "epcount", episode,
+                    color, text
+                )
+            else:
+                output = (color, text)
+
+        return output
+
+    def header(self):
+        return ""
+
+    def footer(self):
+        return ""
+
+    def line(self, entry):
+        return ""

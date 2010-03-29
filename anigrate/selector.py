@@ -1,4 +1,6 @@
-from anigrate.models import Series
+import datetime
+
+from anigrate.models import Series, Watched
 from anigrate.config import Config
 from anigrate.util import choose
 
@@ -139,6 +141,26 @@ class Selector(object):
 
         return query
 
+    @property
+    def log_query(self):
+        # Build a log query
+        query = Watched.query
+        subquery = self.query.subquery()
+
+        # Only display from matching series
+        query = query.join((
+            subquery,
+            subquery.c.id == Watched.series_id
+        ))
+
+        # Preload series objects
+        query = query.options(eagerload('series'))
+
+        # Order by date
+        query = query.order_by(Watched.time.desc())
+
+        return query
+
     def __repr__(self):
         return str(self.query)
 
@@ -150,3 +172,17 @@ class Selector(object):
 
     def log_all(self):
         return self.query.options(eagerload('watched')).all()
+
+    def log(self, limit=None, time=None):
+        query = self.log_query
+
+        if time:
+            query = query.filter(
+                Watched.time < datetime.datetime.now()-
+                                datetime.timedelta(time)
+            )
+
+        if limit:
+            query = query.limit(limit)
+
+        return query.all()

@@ -159,6 +159,9 @@ def main():
         elif hasattr(func, "maxargs") and func.maxargs < len(func_args):
             debug("Error: Too many arguments specified.", raise_exception=False)
 
+        # Check for any arguments that should be set to None
+        func_args = [None if arg == "." else arg for arg in func_args]
+
         # Call the function
         func(*func_args)
 

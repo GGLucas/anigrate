@@ -20,7 +20,16 @@ Manage a list of watched anime or television series.
 
 Commands: 
     See `%(command)s help $command` for extended information about the arguments
-    and usage of a specific command. The following commands are available:
+    and usage of a specific command.
+
+    You can use the shortest unambiguous form to specify each of these commands
+    (for example "li" will suffice for "list" and both "h" and "hist" will
+    suffice for "history").
+
+    Positional arguments can be set to a single period character (".") in order
+    to specify they should remain set to their default values.
+
+    The following commands are available:
 """ % {"command":sys.argv[0]})
         # List all commands
         for name in Commands_Order:
@@ -76,7 +85,10 @@ Selectors:
         will only match series that satisfy the condition.
 
     =<category>
-        Will only match series in the specified category.
+    =%<category>
+        Will only match series in the specified category. If a % is specified,
+        exactly match the category behind it, otherwise match any categories
+        that start with the specified string.
 
     %exact
         When specified, only match series that exactly match the full selector.
@@ -91,10 +103,13 @@ Selectors:
         Default behaviour: match all series that start with the selector.
 
     @rating, @activity, @watched, @title
+    @-rating, @-activity, @-watched, @-title
         Set field to sort by, you can sort by series rating, series latest 
         activity, amount of episodes watched and title respectively.
+        Specifying a "-" reverses the order.
 
     @split
+    @-split
         Default sort method, sorts by activity but splits into watching,
         finished and dropped groups first.
 

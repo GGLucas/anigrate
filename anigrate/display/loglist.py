@@ -107,12 +107,7 @@ class LogDisplay(ListDisplay):
             for i, column in enumerate(self.log_columns):
                 if column == "episode":
                     # Season and episode info
-                    text = (
-                        normalcolor, "season ",
-                        "seasonnum", "%-3d" % entry.seasonnum,
-                        normalcolor, " to ep ",
-                        "epcount", str(entry.finishep),
-                    )
+                    text = self._progress(entry.seasonnum, entry.finishep)
                 elif column == "date":
                     # Watch date
                     text = (
@@ -127,7 +122,7 @@ class LogDisplay(ListDisplay):
                     )
                 else:
                     # Unknown column
-                    text = "???"
+                    text = (normalcolor, "???")
 
                 # Add to the end of log line
                 lines[-1] += self._column(

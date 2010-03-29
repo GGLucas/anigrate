@@ -44,24 +44,24 @@ Config.readfp(StringIO("""
 default_mode=prefix
 default_sort=split
 default_log_limit=0
+default_hist_limit=20
 
 [database]
 
 [appearance]
 color_enabled=yes
 unicode_enabled=yes
-
 date_format=%a %d %b, %Y
 time_format=%H:%M
+progress_format=season %S to ep %E
 old_cutoff=14
 log_reversed=yes
-
 list_columns=title,progress,season,rating
-list_column_sizes=50,7,6,7
-
+list_column_sizes=48,7,6,7
 log_columns=episode,date,time
-log_column_sizes=50,16,7
-
+log_column_sizes=48,16,7
+hist_columns=title,progress,date,time
+hist_column_sizes=28,18,16,6
 default_column_size=10
 
 [weblist]
