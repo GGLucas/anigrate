@@ -1,4 +1,3 @@
-
 from anigrate.commands.display import *
 from anigrate.commands.series import *
 from anigrate.commands.watched import *

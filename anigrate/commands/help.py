@@ -58,6 +58,8 @@ Switches:
                                    configuration file location
       -b, --database=URI         use database connection URI instead of the
                                    database specified in the configuration
+      -q, --quiet                don't display messages when series properties
+                                   are changed or added
       -d, --debug                enable debug mode, this displays python stack 
                                    traces when errors occur
       -s, --set=section.option=value   set a configuration option

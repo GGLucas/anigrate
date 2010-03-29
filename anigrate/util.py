@@ -132,3 +132,10 @@ def promptfor(prompt, default=None, allow_empty=False):
         value = default
 
     return value
+
+def verbose(line, level=1):
+    """
+        Only display a line when verbosity allows it.
+    """
+    if not Config.quiet:
+        print(line)

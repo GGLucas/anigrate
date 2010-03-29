@@ -56,6 +56,9 @@ def parse_args():
     # Change config option(s)
     parser.add_option("-s", "--set", action="callback", callback=setopt, type=str)
 
+    # Debug mode
+    parser.add_option("-q", "--quiet", action="store_true")
+
     # Display help
     parser.add_option("-h", "--help", action="callback", callback=showhelp)
 
@@ -76,8 +79,9 @@ def parse_args():
     if options.database:
         Config.set("database", "uri", options.database)
 
-    # Set debug flag
+    # Store flags in config
     Config.debug = options.debug
+    Config.quiet = options.quiet
 
     return options, args
 

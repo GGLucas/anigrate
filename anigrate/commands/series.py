@@ -1,7 +1,7 @@
 import datetime
 
 from anigrate.models import Session, Series, Season, Watched
-from anigrate.util import register, selector, selector_literal, arguments, promptfor, debug, checkint
+from anigrate.util import register, selector, selector_literal, arguments, promptfor, debug, checkint, verbose
 
 @register("add", shorthelp="add a new series")
 @arguments(0, 5)
@@ -148,6 +148,9 @@ def cm_category(selector, value=None):
         else:
             new = value
 
+        if series.category != new and value is not None:
+            verbose("Setting category to %s for %s..." % (new, series.title))
+
         series.category = new
 
     Session.commit()
@@ -181,6 +184,9 @@ def cm_rate(selector, value=None):
                 continue
         else:
             new = value
+
+        if series.rating != new and value is not None:
+            verbose("Setting rating to %d for %s..." % (new, series.title))
 
         series.rating = new
 
@@ -218,7 +224,42 @@ def cm_duration(selector, value=None):
         else:
             new = value
 
+        if series.duration != new and value is not None:
+            verbose("Setting duration to %d for %s..." % (new, series.title))
+
         series.duration = new
+
+    Session.commit()
+
+@register("drop", shorthelp="mark a series as dropped")
+@arguments(1)
+@selector
+def cm_drop(selector):
+    """
+    drop: [selector]
+        Mark all series matched by [selector] as dropped.
+    """
+
+    for series in selector.all():
+        if not series.dropped:
+            verbose("Dropping %s..." % series.title)
+        series.dropped = True
+
+    Session.commit()
+
+@register("undrop", shorthelp="mark a series as not dropped")
+@arguments(1)
+@selector
+def cm_drop(selector):
+    """
+    undrop: [selector]
+        Mark all series matched by [selector] as not dropped.
+    """
+
+    for series in selector.all():
+        if series.dropped:
+            verbose("Undropping %s..." % series.title)
+        series.dropped = False
 
     Session.commit()
 
@@ -254,5 +295,7 @@ def cm_remove(selector):
         Season.query.filter(
             Season.series == series
         ).delete()
+
+        verbose("Removing %s..." % series.title)
 
     Session.commit()
