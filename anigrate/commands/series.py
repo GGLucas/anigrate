@@ -39,12 +39,12 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
             duration = promptfor("Enter episode duration in minutes", "24")
 
     # Check integer arguments
-    if rating is None:
+    if rating is not None:
         rating = checkint(rating, "rating")
     else:
         rating = 0
 
-    if duration is None:
+    if duration is not None:
         duration = checkint(duration, "duration")
     else:
         duration = 24
