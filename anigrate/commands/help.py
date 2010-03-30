@@ -1,7 +1,7 @@
 import sys
 
 from anigrate.config import Config
-from anigrate.util import register, arguments, Commands, Commands_Order, choose
+from anigrate.util import register, arguments, Commands, Commands_Order, choose, HAVE_DATEUTIL
 
 @register("help", shorthelp="display help text")
 @arguments(0, 1)
@@ -139,6 +139,17 @@ Database Formats:
         for name in Commands_Order:
             func = Commands[name]
             print(func.__doc__.lstrip("\n"))
+    elif command == "dates":
+        print("""
+Date Formats:
+    Some commands allow a date to be specified as an argument. By default, dates
+    are parsed in YYYYMMDD format. If the `dateutil` package has been installed 
+    on the system, any format that can be parsed by it becomes acceptable.
+        """)
+        if HAVE_DATEUTIL:
+            print(" The python `dateutil` package is installed.\n")
+        else:
+            print(" The python `dateutil` package is NOT installed.\n")
     else:
         ## Print help about one command
         cmd = choose(Commands, command, value_only=True)

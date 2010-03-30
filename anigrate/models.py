@@ -16,7 +16,7 @@ def bind_session(connstr="", engine=None):
         Bind the database to a connection string or engine.
     """
     # Create engine
-    engine = create_engine(connstr) if connstr else engine
+    engine = create_engine(connstr, echo=Config.echo) if connstr else engine
 
     # Bind engine to Base and Metadata
     Base.metadata.bind = engine

@@ -43,6 +43,7 @@ def parse_args():
         Parse options from the commandline
     """
     parser = OptionParser(add_help_option=False)
+    parser.allow_interspersed_args = False
 
     # Specific configuration file
     parser.add_option("-c", "--config", dest="config")
@@ -51,13 +52,16 @@ def parse_args():
     parser.add_option("-b", "--database", dest="database")
 
     # Debug mode
-    parser.add_option("-d", "--debug", action="store_true")
+    parser.add_option("-d", "--debug", action="store_true", dest="debug")
 
     # Change config option(s)
     parser.add_option("-s", "--set", action="callback", callback=setopt, type=str)
 
     # Debug mode
-    parser.add_option("-q", "--quiet", action="store_true")
+    parser.add_option("-q", "--quiet", action="store_true", dest="quiet")
+
+    # Display help
+    parser.add_option("-e", "--echo", action="store_true", dest="echo")
 
     # Display help
     parser.add_option("-h", "--help", action="callback", callback=showhelp)
@@ -82,6 +86,7 @@ def parse_args():
     # Store flags in config
     Config.debug = options.debug
     Config.quiet = options.quiet
+    Config.echo = options.echo
 
     return options, args
 

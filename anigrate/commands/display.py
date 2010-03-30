@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from anigrate.util import register, selector, arguments, checkint
+from anigrate.util import register, selector, arguments, checkint, parsedate
 from anigrate.display.serieslist import ListDisplay
 from anigrate.display.loglist import LogDisplay
 from anigrate.display.histlist import HistDisplay
@@ -33,17 +33,19 @@ def cm_log(selector, limit=None):
 @register("history", shorthelp="display watch history")
 @arguments(1, 3)
 @selector
-def cm_hist(selector, limit=None, time=None):
+def cm_hist(selector, limit=None, date=None):
     """
-    hist [num] [time]: [selector]
+    hist [num] [date]: [selector]
         Show the last [num] watched episode entries for series matching
-        [selector]. If [time] is specified, ignore any entries more recent 
-        than [time] days in the past.
+        [selector]. If [date] is specified, ignore any entries more recent 
+        than [date].
 
         Num defaults to the value specified in the configuration.
         Matches all series if no selector is specified.
-    """
-    limit = checkint(limit, "limit argument")
-    time = checkint(time, "time argument")
 
-    HistDisplay(selector=selector, limit=limit, time=time).output(print=lambda text: print("  "+text))
+        See `help dates` for acceptable date formats.
+    """
+    if date is not None:
+        date = parsedate(date)
+
+    HistDisplay(selector=selector, limit=limit, date=date).output(print=lambda text: print("  "+text))

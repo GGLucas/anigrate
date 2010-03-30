@@ -103,7 +103,7 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
     for num, (current, total) in enumerate(seasons):
         # Season entry
         season = Season(
-            num=num,
+            num=num+1,
             series=series,
             episode_total=total,
             current_watched=current,
@@ -115,7 +115,7 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
         if current > 0:
             watched = Watched(
                 season=season,
-                seasonnum=num,
+                seasonnum=num+1,
                 series=series,
                 time=datetime.datetime.now(),
                 startep=0,
@@ -125,7 +125,7 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
             Session.add(watched)
 
     # Series info
-    series.current = num
+    series.current = num+1
     series.eval_finished()
 
     Session.commit()
@@ -245,6 +245,7 @@ def cm_drop(selector):
     drop: [selector]
         Mark all series matched by [selector] as dropped.
     """
+    ## TODO: If selector is empty, show incremental switch
 
     for series in selector.all():
         if not series.dropped:
@@ -257,11 +258,12 @@ def cm_drop(selector):
 @arguments(1)
 @selector
 @paranoia(2, verb="undrop")
-def cm_drop(selector):
+def cm_undrop(selector):
     """
     undrop: [selector]
         Mark all series matched by [selector] as not dropped.
     """
+    ## TODO: If selector is empty, show incremental switch
 
     for series in selector.all():
         if series.dropped:
@@ -279,6 +281,8 @@ def cm_remove(selector):
     remove: [selector]
         Completely remove any series that match [selector].
     """
+    ## TODO: If selector is empty, show incremental switch
+
     for series in selector.all():
         # Delete series info
         Session.delete(series)

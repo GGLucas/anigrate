@@ -173,13 +173,18 @@ class Selector(object):
     def log_all(self):
         return self.query.options(eagerload('watched')).all()
 
-    def log(self, limit=None, time=None):
+    def season_all(self):
+        return self.query.options(eagerload('seasons')).all()
+
+    def all_all(self):
+        return self.query.options(eagerload('seasons'), eagerload('watched')).all()
+
+    def log(self, limit=None, date=None):
         query = self.log_query
 
-        if time:
+        if date:
             query = query.filter(
-                Watched.time < datetime.datetime.now()-
-                                datetime.timedelta(time)
+                Watched.time < date
             )
 
         if limit:

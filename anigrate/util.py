@@ -1,6 +1,13 @@
 import sys
+import datetime
 
 from anigrate.config import Config
+
+try:
+    import dateutil.parser
+    HAVE_DATEUTIL = True
+except ImportError:
+    HAVE_DATEUTIL = False
 
 Commands = {}
 Commands_Order = []
@@ -171,3 +178,23 @@ def verbose(line, level=1):
     """
     if not Config.quiet:
         print(line)
+
+def parsedate(string, error=True):
+    """
+        Attempt to parse a date string using the method available.
+    """
+    if HAVE_DATEUTIL:
+        try:
+            return dateutil.parser.parse(string)
+        except ValueError:
+            pass
+    else:
+        try:
+            return datetime.datetime.strptime(string, '%Y%m%d')
+        except ValueError:
+            pass
+
+    if error:
+        debug("Error: date is in an unknown format.", False)
+    else:
+        return None

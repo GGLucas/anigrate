@@ -9,7 +9,7 @@ class HistDisplay(Display):
         Display a history log in a preset format.
     """
 
-    def __init__(self, selector=None, log=None, limit=None, time=None, header=None, footer=None, line=None):
+    def __init__(self, selector=None, log=None, limit=None, date=None, header=None, footer=None, line=None):
         Display.__init__(self, header, footer, line)
 
         if limit is None:
@@ -17,7 +17,7 @@ class HistDisplay(Display):
 
         if selector:
             self.selector = selector
-            self.log = selector.log(limit=limit, time=time)
+            self.log = selector.log(limit=limit, date=date)
         elif log:
             self.selector = None
             self.log = log
