@@ -178,14 +178,11 @@ def cm_rate(selector, value=None):
         if value is None:
             # Prompt
             new = promptfor("Enter new rating for series `%s`" % 
-            series.title, orig, True)
+            series.title, orig)
 
             # Convert to number
-            if new == "":
-                new = orig
-            else:
-                new = checkint(new, "rating", exit=False)
-                if new == None: continue
+            new = checkint(new, "rating", exit=False)
+            if new == None: continue
         else:
             new = value
 
@@ -218,14 +215,11 @@ def cm_duration(selector, value=None):
         if value is None:
             # Prompt
             new = promptfor("Enter new duration for series `%s`" % 
-            series.title, orig, True)
+            series.title, orig)
 
             # Convert to number
-            if new == "":
-                new = orig
-            else:
-                new = checkint(new, "duration", exit=False)
-                continue
+            new = checkint(new, "duration", exit=False)
+            continue
         else:
             new = value
 
@@ -269,6 +263,42 @@ def cm_undrop(selector):
         if series.dropped:
             verbose("Undropping %s..." % series.title)
         series.dropped = False
+
+    Session.commit()
+
+@register("length", shorthelp="set series length")
+@arguments(1, 2)
+@selector
+@paranoia(2)
+def cm_length(selector, value=None):
+    """
+    length <length>: (selector)
+        Set the active season's length in episodes.
+    """
+    ## TODO: If selector is empty, show incremental switch
+
+    value = checkint(value, "rating")
+
+    for series in selector.all():
+        orig = series.epstotal
+
+        # Prompt if not given
+        if value is None:
+            # Prompt
+            new = promptfor("Enter new length for series `%s`" % 
+            series.title, orig)
+
+            # Convert to number
+            new = checkint(new, "length", exit=False)
+            if new == None: continue
+        else:
+            new = value
+
+        if series.rating != new and value is not None:
+            verbose("Setting length to %d for %s..." % (new, series.title))
+
+        series.epstotal = new
+        series.current_season.episode_total = new
 
     Session.commit()
 

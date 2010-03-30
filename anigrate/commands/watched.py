@@ -18,27 +18,28 @@ def cm_watch(selector, num=None, date=None):
         Add an entry to the series watch log for all series matching [selector].
         If no [num] is specified anigrate acts as if one additional episode was 
         watched in the current season. If [date] is specified the watch log 
-        entries will have their watch dates set to that.
+        entries will have their watch dates set to this instead of the current
+        date and time.
 
         [num] can be specified in various formats:
 
           [+-]x     Add or remove x episodes to the watched count.
                     Note that watch log entries can be lost if the count
-                    is decremented beyond their starting position.
-                     Example: +1 +3 -1 -4
+                    is decreased beyond their starting position.
+                     Examples: +1 +3 -1 -4
 
           x         Set the watched count to exactly x, adding and removing
                     log entries as necessary.
-                     Example: 5 12 24
+                     Examples: 5 12 24
 
           x/y       Set the watched count to exactly x, and simultaneously
                     set the current season's length to y.
-                     Example: 5/12 13/24 16/20
+                     Examples: 5/12 13/24 16/20
 
           x/        Set the watched count to exactly x, and simultanously
-       or /x        set the current season's length to x as well. In other words,
-                    this marks the season as completed with x apps.
-                     Example: 14/ 22/ /26 /52
+       or /x        set the current season's length to x as well. In other 
+                    words, this marks the season as completed with x eps.
+                     Examples: 14/ 22/ /26 /52
 
         See `help dates` for acceptable date formats.
     """
