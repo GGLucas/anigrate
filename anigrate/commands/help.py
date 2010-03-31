@@ -3,6 +3,10 @@ import sys
 from anigrate.config import Config
 from anigrate.util import register, arguments, Commands, Commands_Order, choose, HAVE_DATEUTIL
 
+from anigrate.help.generic import HELP_TOP, HELP_BOTTOM
+from anigrate.help.subjects import Subjects
+from anigrate.help.configuration import ConfigHelp
+
 @register("help", shorthelp="display help text")
 @arguments(0, 1)
 def cm_help(command=None):
@@ -12,152 +16,49 @@ def cm_help(command=None):
     """
 
     if not command:
-        ## Print help header
-        # Help header
-        print("""
-Usage: %(command)s [COMMAND] [ARGS...]: [SELECTOR]
-Manage a list of watched anime or television series.
+        # Help top part
+        print(HELP_TOP % {"command":sys.argv[0]})
 
-Commands: 
-    See `%(command)s help $command` for extended information about the arguments
-    and usage of a specific command.
-
-    You can use the shortest unambiguous form to specify each of these commands
-    (for example "li" will suffice for "list" and both "hi" and "hist" will
-    suffice for "history").
-
-    Positional arguments can be set to a single period character (".") in order
-    to specify they should remain set to their default values.
-
-    The following commands are available:
-""" % {"command":sys.argv[0]})
         # List all commands
         for name in Commands_Order:
             func = Commands[name]
             print("    "+name.ljust(16)+
             (func.shorthelp if hasattr(func, "shorthelp") else ""))
 
-        print("""
-Selectors:
-    See `%(command)s help selectors` for detailed information on how to use 
-    selectors and what the items mean. The following items are supported:
-
-    +finished, +completed, +watching, +dropped, +undropped
-      filter on this state
-    =<category>
-      filter on this category
-    %%exact, %%contains, %%suffix, %%prefix
-      set match mode
-    @rating, @activity, @watched, @title, @split
-      set sort mode
-
-Switches:
-    The following command-line switches are available to be specified.
-    
-      -c, --config=CONFIG        load file CONFIG instead of the default 
-                                   configuration file location
-      -b, --database=URI         use database connection URI instead of the
-                                   database specified in the configuration
-      -q, --quiet                don't display messages when series properties
-                                   are changed or added
-      -d, --debug                enable debug mode, this displays python stack 
-                                   traces when errors occur
-      -s, --set=section.option=value   set a configuration option
-
-Database:
-    By default anigrate uses an sqlite database in $HOME/.anigrate/db,
-    see the example anigraterc for other possibilities.
-
-Import/Export Formats:
-    For extended information on available database import and export formats, 
-    see `%(command)s help dbformat`. The following formats are available:
-
-    csv, anidb, myanimelist
-""" % {"command":sys.argv[0]})
-    elif command == "selectors":
-        print("""
-Selectors:
-    Selectors are used to find series to act upon. In its most basic form, a 
-    selector is simply the name of a series or the beginning of a name of a 
-    series (note that the selector will match any series that start with the 
-    specified name). Within the selector, the options listed below can be given.
-
-    +finished/+completed, +watching, +dropped, +undropped:
-        Put any of these in a separate argument anywhere in the selector and it 
-        will only match series that satisfy the condition.
-
-    =<category>
-    =%<category>
-        Will only match series in the specified category. If a % is specified,
-        exactly match the category behind it, otherwise match any categories
-        that start with the specified string.
-
-    %exact
-        When specified, only match series that exactly match the full selector.
-
-    %contains
-        When specified, match all series containing the selector.
-
-    %suffix
-        When specified, match all series that end with the selector.
-
-    %prefix
-        Default behaviour: match all series that start with the selector.
-
-    @rating, @activity, @watched, @title
-    @-rating, @-activity, @-watched, @-title
-        Set field to sort by, you can sort by series rating, series latest 
-        activity, amount of episodes watched and title respectively.
-        Specifying a "-" reverses the order.
-
-    @split
-    @-split
-        Default sort method, sorts by activity but splits into watching,
-        finished and dropped groups first.
-
-""")
-    elif command == "dbformat":
-        # Database format help.
-        print("""
-Database Formats:
-    Database formats are used to determine how to read or write series
-    from or to a file, the following format specifiers are available:
-
-    csv
-        Uses a simple csv file with series titles and other info.
-
-    anidb
-        Uses anidb.net's csv-minimal MyList export template.
-
-    myanimelist  [IMPORT ONLY]
-        Uses myanimelist.net's xml export format.
-        When importing from myanimelist be sure to uncompress it before feeding
-        it to anigrate; you can use pipes for this. For example:
-          $ gunzip -c animelist_0000_-_0000.xml.gz | anigrate import - myanimelist
-""")
+        # Help bottom part
+        print(HELP_BOTTOM % {"command":sys.argv[0]})
     elif command == "commands":
         for name in Commands_Order:
             func = Commands[name]
             print(func.__doc__.lstrip("\n"))
+    elif command == "configuration":
+        print(Subjects["configuration"])
+        for name in sorted(ConfigHelp):
+            print("    "+name)
+        print("")
+    elif command == "options":
+        for name in sorted(ConfigHelp):
+            print(ConfigHelp[name].lstrip("\n"))
+        print("")
     elif command == "dates":
-        print("""
-Date Formats:
-    Some commands allow a date to be specified as an argument. By default, dates
-    are parsed in YYYYMMDD format. If the `dateutil` package has been installed 
-    on the system, any format that can be parsed by it becomes acceptable.
-        """)
+        print(Subjects['dates'])
+
         if HAVE_DATEUTIL:
             print(" The python `dateutil` package is installed.\n")
         else:
             print(" The python `dateutil` package is NOT installed.\n")
     else:
-        ## Print help about one command
-        cmd = choose(Commands, command, value_only=True)
-        if cmd:
-            for func in cmd:
-                print(func.__doc__)
+        if command in Subjects:
+            print(Subjects[command])
+        elif command in ConfigHelp:
+            print(ConfigHelp[command])
         else:
-            print("Help subject `%s` not found." % command)
+            cmd = choose(Commands, command, value_only=True)
+            if cmd:
+                for func in cmd:
+                    print(func.__doc__)
+            else:
+                print("Help subject `%s` not found." % command)
 
 @register("version", shorthelp="display version information")
 @arguments(0)

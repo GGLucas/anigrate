@@ -33,7 +33,7 @@ class HistDisplay(Display):
         # Add any missing sizes as default
         if self.column_count > sizes:
             self.column_sizes += (
-              [Config.getinteger("appearance","default_column_size")]*
+              [Config.getint("appearance","default_column_size")]*
               (self.column_count-sizes))
 
     def output(self, print=print):
