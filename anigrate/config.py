@@ -63,7 +63,6 @@ log_columns=episode,date,time
 log_column_sizes=48,16,7
 hist_columns=title,progress,date,time
 hist_column_sizes=28,18,16,6
-default_column_size=10
 
 [weblist]
 title_list=Watch List

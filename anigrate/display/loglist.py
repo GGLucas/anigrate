@@ -33,8 +33,7 @@ class LogDisplay(ListDisplay):
         # Add any missing sizes as default
         if self.log_column_count > sizes:
             self.log_column_sizes += (
-              [Config.getint("appearance","default_column_size")]*
-              (self.log_column_count-sizes))
+              [10]*(self.log_column_count-sizes))
 
         ListDisplay.__init__(self, header=header, footer=footer, line=line)
 
