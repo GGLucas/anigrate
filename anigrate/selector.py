@@ -1,10 +1,12 @@
 import datetime
+from math import floor
 
-from anigrate.models import Series, Watched
+from anigrate.models import Series, Watched, Session
 from anigrate.config import Config
 from anigrate.util import choose
 
 from sqlalchemy.orm import eagerload
+from sqlalchemy.sql import functions
 
 SORT = {
     "rating":   [(Series.rating, "desc")],
@@ -127,11 +129,7 @@ class Selector(object):
                 else:
                     self.sort.append(elem[0].asc())
 
-    @property
-    def query(self):
-        # Build a new query
-        query = Series.query
-
+    def add_filters(self, query):
         # Add filters
         for filt in self.filters:
             query = query.filter(filt)
@@ -140,6 +138,10 @@ class Selector(object):
         query = query.order_by(*self.sort)
 
         return query
+
+    @property
+    def query(self):
+        return self.add_filters(Series.query)
 
     @property
     def log_query(self):
@@ -160,6 +162,24 @@ class Selector(object):
         query = query.order_by(Watched.time.desc())
 
         return query
+
+    @property
+    def time(self):
+        query = Session.query(
+            functions.sum(Series.duration.op("*")(Series.epsall))
+        )
+
+        totalminutes = minutes = int(self.add_filters(query).one()[0])
+        totaldays = minutes/1440.0
+        times = []
+
+        for duration in  [525960,43200,10080, 1440, 60, 1]:
+            amount = floor(minutes/duration)
+            minutes -= amount*duration
+            times.append(amount)
+
+        return totalminutes, totaldays, times
+
 
     def __repr__(self):
         return str(self.query)
