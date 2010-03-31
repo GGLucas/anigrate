@@ -180,7 +180,6 @@ class Selector(object):
 
         return totalminutes, totaldays, times
 
-
     def __repr__(self):
         return str(self.query)
 

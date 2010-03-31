@@ -6,7 +6,7 @@ from anigrate.util import (register, selector, selector_literal,
                    arguments, promptfor, debug, checkint, verbose,
                    paranoia)
 
-@register("time", shorthelp="get total duration of series")
+@register("time", shorthelp="get total watching time spent")
 @arguments(1)
 @selector
 def cm_time(selector):
