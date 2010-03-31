@@ -7,6 +7,16 @@ from anigrate.help.generic import HELP_TOP, HELP_BOTTOM
 from anigrate.help.subjects import Subjects
 from anigrate.help.configuration import ConfigHelp
 
+@register("config", shorthelp="output current configuration")
+@arguments(0)
+def cm_config():
+    """
+    config
+        Output the currently used configuration in a format usable for 
+        a config file.
+    """
+    Config.write(sys.stdout)
+
 @register("help", shorthelp="display help text")
 @arguments(0, 1)
 def cm_help(command=None):
