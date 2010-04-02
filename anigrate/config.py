@@ -5,14 +5,12 @@ import codecs
 from ConfigParser import ConfigParser
 from StringIO import StringIO
 
-from anigrate.defaults import *
-
 # Parser
 Config = ConfigParser()
 
 # Configuration constants
 Config.ANIGRATE_URI = "http://anigrate.glacicle.org"
-Config.ANIGRATE_VERSION = "1.0"
+Config.ANIGRATE_VERSION = "1.0.0"
 Config.CONF_DIR = os.getenv("HOME")+"/.anigrate"
 Config.DB_LOCATION = Config.CONF_DIR+"/db"
 Config.CONF_LOCATION = Config.CONF_DIR+"/config"
@@ -110,7 +108,7 @@ stat_perc=bold,blue
 Config.set("database", "uri", "sqlite:///"+Config.DB_LOCATION)
 
 # Read configs
-Config.read([CONF_LOCATION, os.path.join(os.getcwd(), "anigraterc")])
+Config.read([Config.CONF_LOCATION, os.path.join(os.getcwd(), "anigraterc")])
 
 # Parse colors into escape codes
 if Config.getboolean("appearance", "color_enabled"):
