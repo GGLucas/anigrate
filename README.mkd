@@ -109,7 +109,7 @@ Selectors
    Put any of these in a separate argument anywhere in the selector and it
    will only match series that satisfy the condition.
 
- * =\<category\> =%\<category\>
+ * =\<category\>, =%\<category\>
 
    Will only match series in the specified category. If a % is specified,
    exactly match the category behind it, otherwise match any categories
@@ -131,13 +131,13 @@ Selectors
 
    Default behaviour: match all series that start with the selector.
 
- * @rating, @activity, @watched, @title @-rating, @-activity, @-watched, @-title
+ * @rating, @activity, @watched, @title, @-rating, @-activity, @-watched, @-title
 
    Set field to sort by, you can sort by series rating, series latest
    activity, amount of episodes watched and title respectively. Specifying
    a "-" reverses the order.
 
- * @split @-split
+ * @split, @-split
 
    Default sort method, sorts by activity but splits into watching,
    finished and dropped groups first.
