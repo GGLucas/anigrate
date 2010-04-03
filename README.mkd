@@ -70,32 +70,32 @@ Usage Examples
 
  * Adding a new series
 
-   $ anigrate add
+   `anigrate add`
 
    The add command will prompt you for any information required, then adds
    a new series with that information. Alternatively you can specify them
    manually:
-    $ anigrate add anime: Ginga Eiyuu Densetsu
-    $ anigrate add tv: how i met your mother
+    `anigrate add anime: Ginga Eiyuu Densetsu`
+    `anigrate add tv: how i met your mother`
 
  * Incrementing a series watch count
 
-   $ anigrate watch: how i met your mother
+   `anigrate watch: how i met your mother`
 
    This command will increment the watch count on the specified series and
    display the current log afterwards. You can also specify the amount of
    episodes or a specific episode number, as well as the total amount of
    episodes this season. Note that you don't need to type the entire name
    of the series, only the first bit.
-    $ anigrate watch +3: how i
-    $ anigrate watch 12/110: ginga
+    `anigrate watch +3: how i`
+    `anigrate watch 12/110: ginga`
 
  * Viewing your current progress
 
-   $ anigrate list: ginga eiyuu
+   `anigrate list: ginga eiyuu`
 
    By using the list command, you can see how far along you are in a
-   series. Not specifying any series (ie calling $ anigrate list) will
+   series. Not specifying any series (ie calling `anigrate list`) will
    show you your progress on every series.
 
 
@@ -164,8 +164,8 @@ or to a file, the following format specifiers are available:
    Uses myanimelist.net's xml export format. When importing from
    myanimelist be sure to uncompress it before feeding it to anigrate; you
    can use pipes for this. For example:
-   $ gunzip -c animelist\_0000\_-\_0000.xml.gz | anigrate import -
-   myanimelist
+   `gunzip -c animelist\_0000\_-\_0000.xml.gz | anigrate import -
+   myanimelist`
 
 
 Date Formats
