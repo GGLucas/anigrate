@@ -109,7 +109,7 @@ Selectors
    Put any of these in a separate argument anywhere in the selector and it
    will only match series that satisfy the condition.
 
- * =<category> =%<category>
+ * =\<category\> =%\<category\>
 
    Will only match series in the specified category. If a % is specified,
    exactly match the category behind it, otherwise match any categories
