@@ -1,7 +1,9 @@
 import sys
 
 from anigrate.config import Config
-from anigrate.util import register, arguments, Commands, Commands_Order, choose, HAVE_DATEUTIL
+from anigrate.util import (register, arguments, Commands,
+                        Commands_Season, Commands_Season_Order,
+                        Commands_Order, choose, HAVE_DATEUTIL)
 
 from anigrate.help.generic import HELP_TOP, HELP_BOTTOM
 from anigrate.help.subjects import Subjects
@@ -18,12 +20,12 @@ def cm_config():
     Config.write(sys.stdout)
 
 @register("help", shorthelp="display help text")
-@arguments(0, 1)
-def cm_help(command=None):
+def cm_help(*command):
     """
     help
         Display a help information screen listing all the commands and options.
     """
+    command = " ".join(command)
 
     if not command:
         # Help top part
@@ -32,7 +34,14 @@ def cm_help(command=None):
         # List all commands
         for name in Commands_Order:
             func = Commands[name]
-            print("    "+name.ljust(16)+
+            print("    "+name.ljust(18)+
+            (func.shorthelp if hasattr(func, "shorthelp") else ""))
+
+        # List all commands
+        print("")
+        for name in Commands_Season_Order:
+            func = Commands_Season[name]
+            print("    season "+name.ljust(11)+
             (func.shorthelp if hasattr(func, "shorthelp") else ""))
 
         # Help bottom part
@@ -62,6 +71,13 @@ def cm_help(command=None):
             print(Subjects[command])
         elif command in ConfigHelp:
             print(ConfigHelp[command])
+        elif command.startswith("season "):
+            cmd = choose(Commands_Season, command[7:], value_only=True)
+            if cmd:
+                for func in cmd:
+                    print(func.__doc__)
+            else:
+                print("Help subject `%s` not found." % command)
         else:
             cmd = choose(Commands, command, value_only=True)
             if cmd:

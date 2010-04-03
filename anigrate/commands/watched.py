@@ -23,21 +23,21 @@ def cm_watch(selector, num=None, date=None):
 
         [num] can be specified in various formats:
 
-          [+-]x     Add or remove x episodes to the watched count.
+          [+-]x  :  Add or remove x episodes to the watched count.
                     Note that watch log entries can be lost if the count
                     is decreased beyond their starting position.
                      Examples: +1 +3 -1 -4
 
-          x         Set the watched count to exactly x, adding and removing
+          x      :  Set the watched count to exactly x, adding and removing
                     log entries as necessary.
                      Examples: 5 12 24
 
-          x/y       Set the watched count to exactly x, and simultaneously
+          x/y    :  Set the watched count to exactly x, and simultaneously
                     set the current season's length to y.
                      Examples: 5/12 13/24 16/20
 
-          x/        Set the watched count to exactly x, and simultanously
-       or /x        set the current season's length to x as well. In other 
+          x/, /x :  Set the watched count to exactly x, and simultanously
+                    set the current season's length to x as well. In other 
                     words, this marks the season as completed with x eps.
                      Examples: 14/ 22/ /26 /52
 

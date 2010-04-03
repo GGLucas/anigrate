@@ -6,7 +6,7 @@ Selectors:
     series (note that the selector will match any series that start with the 
     specified name). Within the selector, the options listed below can be given.
 
-    +finished/+completed, +watching, +dropped, +undropped:
+    +finished/+completed, +watching, +dropped, +undropped
         Put any of these in a separate argument anywhere in the selector and it 
         will only match series that satisfy the condition.
 

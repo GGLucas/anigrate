@@ -3,7 +3,7 @@ import datetime
 from anigrate.models import Session, Series, Season, Watched
 from anigrate.util import (register, selector, selector_literal,
                    arguments, promptfor, debug, checkint, verbose,
-                   paranoia)
+                   paranoia, parseprogress)
 
 @register("add", shorthelp="add a new series")
 @arguments(0, 5)
@@ -54,34 +54,7 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
         category = ""
 
     # Parse progress argument
-    if progress:
-        seasons = []
-
-        for season in progress.split(","):
-            # Amount of seasons to create like this
-            if "*" in season:
-                season, times = season.split("*", 1)
-                times = checkint(times, "season multiplier")
-            else:
-                times = 1
-
-            # Watched and total
-            if "/" in season:
-                watched, total = season.split("/")
-
-                watched = checkint(watched, "watched amount")
-
-                if total:
-                    total = checkint(total, "total episodes")
-                else:
-                    total = watched
-            else:
-                watched = checkint(season, "watched amount")
-                total = 0
-
-            seasons.extend([(watched, total),]*times)
-    else:
-        seasons = ((0, 0),)
+    seasons = parseprogress(progress)
 
     # Check if series exists
     if Series.exists(name, category):
@@ -272,7 +245,7 @@ def cm_undrop(selector):
 @paranoia(2)
 def cm_length(selector, value=None):
     """
-    length <length>: (selector)
+    length [length]: (selector)
         Set the active season's length in episodes.
     """
     ## TODO: If selector is empty, show incremental switch

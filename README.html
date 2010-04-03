@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<title>Anigrate: simple cli watch list management</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>
+  html {
+    font-family: "Helvetica", sans-serif;
+    font-size: 0.9em;
+    padding: 0 1em;
+    margin: 0 10%;
+  }
+
+  h1,h2,h3,h4 {
+    margin: .5em 0;
+  }
+
+  p {
+    margin: 0.5em 0;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  ul {
+    list-style-type: square;
+  }
+
+  img {
+    border: 2px solid #eee;
+  }
+
+  section > h1 {
+    font-size: 1.4em;
+    margin-top: 1em;
+  }
+
+  section > h2 {
+    font-size: 85%;
+  }
+
+  section > section {
+    font-size: 0.9em;
+  }
+
+  section > section > small {
+    font-size: 85%;
+    font-weight: bold;
+    color: #444;
+  }
+
+  section > section > h1 {
+    font-size: 100%;
+  }
+
+  section > section > h2 {
+    font-size: 85%;
+    color: #444;
+  }
+
+  nav ul {
+    column-width: 15em;
+    -moz-column-width: 15em;
+    -webkit-column-width: 15em;
+  }
+</style>
+
+<header>
+  <hgroup>
+    <h1>Anigrate</h1>
+    <h2>simple cli watch list management</h2>
+  </hgroup>
+
+  <nav><ul>
+    <li><a href="#screenshots">Screenshots</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#install">Installation</a></li>
+    <li><a href="#usage">Usage Examples</a></li>
+    <li><a href="#selectors">Selectors</a></li>
+    <li><a href="#dbformat">Database Formats</a></li>
+    <li><a href="#dates">Date Formats</a></li>
+    <li><a href="#commands">Commands</a></li>
+    <li><a href="#configuration">Configuration Options</a></li>
+    <li><a href="#configexample">Example Configuration</a></li>
+  </ul></nav>
+</header>
+
+<section id="screenshots">
+  <h1>Screenshots</h1>
+  <a href="http://anigrate.glacicle.org/cli_shot1.png">
+  <img src="http://anigrate.glacicle.org/cli_shot1.thumb.png" alt="" /></a>
+  <a href="http://anigrate.glacicle.org/cli_shot2.png">
+  <img src="http://anigrate.glacicle.org/cli_shot2.thumb.png" alt="" /></a>
+  <a href="http://anigrate.glacicle.org/web_shot1.png">
+  <img src="http://anigrate.glacicle.org/web_shot1.thumb.png" alt="" /></a>
+  <a href="http://anigrate.glacicle.org/web_shot2.png">
+  <img src="http://anigrate.glacicle.org/web_shot2.thumb.png" alt="" /></a>
+  <a href="http://anigrate.glacicle.org/web_shot3.png">
+  <img src="http://anigrate.glacicle.org/web_shot3.thumb.png" alt="" /></a>
+  <a href="http://anigrate.glacicle.org/web_shot4.png">
+  <img src="http://anigrate.glacicle.org/web_shot4.thumb.png" alt="" /></a>
+</section>
+
+<section id='about'>
+  <h1>About</h1>
+  <p>Anigrate is a simple, no-nonsense watch list manager for anime and tv 
+  series made for people who like to do most of their work in a shell, yet 
+  want something full-featured to keep track of their series for them.</p>
+
+  <p>Features include a full log view of everything ever watched, a public web list 
+  for showing off or simply for a pretty view of your watch list and detailed 
+  statistics about your watching behaviour.</p>
+
+  <p>Anigrate uses a simple sqlite database in your home directory by default, 
+  there's no need to configure or set anything up other than the main binary. 
+  However, if you want to, you can connect to a remote mysql database and keep 
+  track of your watch list centrally. The web interface can be run stand-alone 
+  with a simple command, but can also be used through wsgi (and, if flup is 
+  installed, you can run an fcgi or scgi server).</p>
+</section>
+
+<section id="features">
+  <h1>Features</h1>
+  <ul>
+    <li>Full per-episode watch log including seasons.</li>
+    <li>Extensive series selector system for easy target specification.</li>
+    <li>Organisation of series into multiple categories.</li>
+    <li>Setting per episode duration individually per series, and 
+    calculating the total time spent watching from this.</li>
+    <li>Specifying your rating for a series and sorting by rating.</li>
+    <li>Various watch statistics; episodes watched per month/year/day of 
+    the week/hour of the day/etc.</li>
+    <li>View-only weblist server (http, wsgi, fcgi, scgi) that can 
+    display all this information in a pretty public list.</li>
+
+    <li>
+      <strong>[New]</strong>
+      Import database from <a href="http://myanimelist.net">myanimelist.net</a>
+      or <a href="http://anidb.net">anidb.net</a> export formats.
+    </li>
+    <li>Support for local or remote databases in any format supported by
+    <a href="http://sqlalchemy.org">sqlalchemy</a>.</li>
+  </ul>
+</section>
+
+<section id="contact">
+  <h1>Contact</h1>
+  <p>Anigrate is written and maintained by <a 
+    href="mailto:lucas@glacicle.org">Lucas de Vries</a>. Feel free to 
+  send over an email for any bug reports or suggestions.</p>
+</section>
+
+<section id="install">
+  <h1>Installation</h1>
+  <p>If you are an arch linux user, there is a package available at the 
+  arch user repository at <a 
+    href="http://aur.archlinux.org/packages.php?ID=33454">
+    http://aur.archlinux.org/packages.php?ID=33454</a><p>
+
+  <p>You can also clone the git repository and simply copy the anigrate 
+  binary to a folder in your path.</p>
+
+  <p> Web interface for git repository: 
+  <a href="http://git.glacicle.org/anigrate/">
+    http://git.glacicle.org/anigrate/</a><br/>
+  Clone: <code>git clone git://glacicle.org/projects/anigrate.git</code></p>
+</section>
+
+<section id="usage">
+  <h1>Usage Examples</h1>
+  <p>In its most basic form, anigrate is rather easy to use, some examples for
+  common watch list management tasks:<p>
+
+  <h2>Adding a new series</h2>
+  <a href="#cmd-add"><code>$ anigrate add</code></a>
+  <p>The add command will prompt you for any information required, then adds a
+  new series with that information. Alternatively you can specify them manually:
+  </p>
+  <pre>
+    $ anigrate add anime: Ginga Eiyuu Densetsu
+    $ anigrate add tv: how i met your mother
+  </pre>
+
+  <h2>Incrementing a series watch count</h2>
+  <a href="#cmd-watch"><code>$ anigrate watch: how i met your mother</code></a>
+  <p>This command will increment the watch count on the specified series and
+  display the current log afterwards. You can also specify the amount of 
+  episodes or a specific episode number, as well as the total amount of 
+  episodes this season. Note that you don't need to type the entire name
+  of the series, only the first bit.</p>
+  <pre>
+    $ anigrate watch +3: how i
+    $ anigrate watch 12/110: ginga
+  </pre>
+
+  <h2>Viewing your current progress</h2>
+  <a href="#cmd-list"><code>$ anigrate list: ginga eiyuu</code></a>
+  <p>By using the <code>list</code> command, you can see how far along you
+  are in a series. Not specifying any series (ie calling <code>$ anigrate 
+  list</code>) will show you your progress on every series.</p>
+</section>
+
+<section id="selectors">
+  <h1>Selectors</h1>
+  <p>Selectors are used to find series to act upon. In its most basic form, a 
+  selector is simply the name of a series or the beginning of a name of a 
+  series (note that the selector will match any series that start with the 
+  specified name). Within the selector, the options listed below can be given.
+
+  <h2>+finished/+completed, +watching, +dropped, +undropped</h2>
+  <p>Put any of these in a separate argument anywhere in the selector and it 
+  will only match series that satisfy the condition.</p>
+
+  <h2>=&lt;category&gt;
+  =%&lt;category&gt;</h2>
+      <p>Will only match series in the specified category. If a % is specified,
+      exactly match the category behind it, otherwise match any categories
+      that start with the specified string.</p>
+
+  <h2>%exact</h2>
+      <p>When specified, only match series that exactly match the full selector.</p>
+
+  <h2>%contains</h2>
+      <p>When specified, match all series containing the selector.</p>
+
+  <h2>%suffix</h2>
+      <p>When specified, match all series that end with the selector.</p>
+
+  <h2>%prefix</h2>
+      <p>Default behaviour: match all series that start with the selector.</p>
+
+  <h2>@rating, @activity, @watched, @title
+  @-rating, @-activity, @-watched, @-title</h2>
+      <p>Set field to sort by, you can sort by series rating, series latest 
+      activity, amount of episodes watched and title respectively.
+      Specifying a "-" reverses the order.</p>
+
+  <h2>@split
+  @-split</h2>
+      <p>Default sort method, sorts by activity but splits into watching,
+      finished and dropped groups first.</p>
+</section>
+
+<section id='dbformat'>
+  <h1>Database Formats</h1>
+  <p>Database formats are used to determine how to read or write series
+  from or to a file, the following format specifiers are available:</p>
+
+  <h2>csv</h2>
+      <p>Uses a simple csv file with series titles and other info.</p>
+
+  <h2>anidb</h2>
+      <p>Uses anidb.net's csv-minimal MyList export template.</p>
+
+  <h2>myanimelist  [IMPORT ONLY]</h2>
+      <p>Uses myanimelist.net's xml export format.
+      When importing from myanimelist be sure to uncompress it before feeding
+      it to anigrate; you can use pipes for this. For example:</p>
+      <code>$ gunzip -c animelist_0000_-_0000.xml.gz | anigrate import - 
+      myanimelist</code>
+</section>
+
+<section id='dates'>
+  <h1>Date Formats</h1>
+  <p>Some commands allow a date to be specified as an argument. By default, dates
+  are parsed in YYYYMMDD format. If the `dateutil` package has been installed 
+  on the system, any format that can be parsed by it becomes acceptable.</p>
+</section>
+<section id="commands">
+<h1>Commands</h1>
+<p>
+        See `%(command)s help $command` for extended information about the arguments
+        and usage of a specific command.</p>
+
+        <p>You can use the shortest unambiguous form to specify each of these commands
+        (for example "li" will suffice for "list" and both "hi" and "hist" will
+        suffice for "history").</p>
+
+        <p>Positional arguments can be set to a single period character (".") in order
+        to specify they should remain set to their default values.
+        </p><nav><ul>
+<li><a href='#cmd-list'>list</a></li>
+<li><a href='#cmd-log'>log</a></li>
+<li><a href='#cmd-history'>history</a></li>
+<li><a href='#cmd-get'>get</a></li>
+<li><a href='#cmd-add'>add</a></li>
+<li><a href='#cmd-category'>category</a></li>
+<li><a href='#cmd-rate'>rate</a></li>
+<li><a href='#cmd-duration'>duration</a></li>
+<li><a href='#cmd-drop'>drop</a></li>
+<li><a href='#cmd-undrop'>undrop</a></li>
+<li><a href='#cmd-length'>length</a></li>
+<li><a href='#cmd-remove'>remove</a></li>
+<li><a href='#cmd-watch'>watch</a></li>
+<li><a href='#cmd-season'>season</a></li>
+<li><a href='#cmd-time'>time</a></li>
+<li><a href='#cmd-match'>match</a></li>
+<li><a href='#cmd-info'>info</a></li>
+<li><a href='#cmd-initialise'>initialise</a></li>
+<li><a href='#cmd-config'>config</a></li>
+<li><a href='#cmd-help'>help</a></li>
+<li><a href='#cmd-version'>version</a></li>
+<li><a href='#seasoncmd-add'>season add</a></li>
+<li><a href='#seasoncmd-length'>season length</a></li>
+</ul></nav>
+<section id='cmd-list'>
+<h1>list: [selector]</h1>
+<p>        List all series matched by [selector].
+        If no selector is given, match all series.
+    </p>
+</section>
+<section id='cmd-log'>
+<h1>log [limit]: [selector]</h1>
+<p>        Show a detailed log for series matching [selector].
+        If limit is specified, limit the amount of log entries shown per
+        matched series to that number.
+    </p>
+</section>
+<section id='cmd-history'>
+<h1>hist [num] [date]: [selector]</h1>
+<p>        Show the last [num] watched episode entries for series matching
+        [selector]. If [date] is specified, ignore any entries more recent
+        than [date].</p><p>        Num defaults to the value specified in the configuration.
+        Matches all series if no selector is specified.</p><p>        See `help dates` for acceptable date formats.
+    </p>
+</section>
+<section id='cmd-get'>
+<h1>get: [selector]</h1>
+<p>        Show all recorded information about a series and its seasons.
+        Does not show the watch log (use `log` for that)
+    </p>
+</section>
+<section id='cmd-add'>
+<h1>add [category] [watched[/total][*seasons],..] [rating] [duration]: [name]</h1>
+<p>        Add a new series entry with name specified by (name).
+        Optionally, you can specify the category, duration, amount of episodes
+        watched, amount of episodes total, amount of seasons and rating.</p><p>        If no name is specified as selector, the add command will prompt for it 
+        and any other arguments not specified either.
+    </p>
+</section>
+<section id='cmd-category'>
+<h1>category [category]: (selector)</h1>
+<p>        Mark all series matched by (selector) as having category [category].
+    </p>
+</section>
+<section id='cmd-rate'>
+<h1>rate [score]: [selector]</h1>
+<p>        Rate all series matched by [selector] with [score].
+    </p>
+</section>
+<section id='cmd-duration'>
+<h1>duration [time]: [selector]</h1>
+<p>        Set the average duration of an episode in series matching [selector].
+        This is used to calculate total watching time, defaults to 24 minutes
+        per episode for every series.
+    </p>
+</section>
+<section id='cmd-drop'>
+<h1>drop: [selector]</h1>
+<p>        Mark all series matched by [selector] as dropped.
+    </p>
+</section>
+<section id='cmd-undrop'>
+<h1>undrop: [selector]</h1>
+<p>        Mark all series matched by [selector] as not dropped.
+    </p>
+</section>
+<section id='cmd-length'>
+<h1>length [length]: (selector)</h1>
+<p>        Set the active season's length in episodes.
+    </p>
+</section>
+<section id='cmd-remove'>
+<h1>remove: [selector]</h1>
+<p>        Completely remove any series that match [selector].
+    </p>
+</section>
+<section id='cmd-watch'>
+<h1>watch [num] [date]: [selector]</h1>
+<p>        Add an entry to the series watch log for all series matching [selector].
+        If no [num] is specified anigrate acts as if one additional episode was 
+        watched in the current season. If [date] is specified the watch log 
+        entries will have their watch dates set to this instead of the current
+        date and time.</p><p>        [num] can be specified in various formats:</p><p>          [+-]x  :  Add or remove x episodes to the watched count.
+                    Note that watch log entries can be lost if the count
+                    is decreased beyond their starting position.
+                     Examples: +1 +3 -1 -4</p><p>          x      :  Set the watched count to exactly x, adding and removing
+                    log entries as necessary.
+                     Examples: 5 12 24</p><p>          x/y    :  Set the watched count to exactly x, and simultaneously
+                    set the current season's length to y.
+                     Examples: 5/12 13/24 16/20</p><p>          x/, /x :  Set the watched count to exactly x, and simultanously
+                    set the current season's length to x as well. In other 
+                    words, this marks the season as completed with x eps.
+                     Examples: 14/ 22/ /26 /52</p><p>        See `help dates` for acceptable date formats.
+    </p>
+</section>
+<section id='cmd-season'>
+<h1>season</h1>
+<p>        Modify various information about seasons. See the season
+        command reference.
+    </p>
+</section>
+<section id='cmd-time'>
+<h1>time: [selector]</h1>
+<p>        Get the total watching time spent on series matching [selector].
+        If no selector is specified, the total watching time for all 
+        series is given.
+    </p>
+</section>
+<section id='cmd-match'>
+<h1>match: [selector]</h1>
+<p>        Output a simple no-nonsense list of series matched by [selector],
+        useful for piping into other binaries. If no selector is given, match
+        all series.
+    </p>
+</section>
+<section id='cmd-info'>
+<h1>info: [selector]</h1>
+<p>        Output a no-nonsense list with information on all series matched by
+        [selector], useful for piping into other binaries. If no selector is 
+        given, match all series.</p><p>        Outputs series info in format:
+            title	current_episode	total_episodes	current_season	rating</p><p>        ie. each item is separated by a tab character for easy parsing.
+    </p>
+</section>
+<section id='cmd-initialise'>
+<h1>initialise</h1>
+<p>        Initialise the database with all the necessary tables. Note that this
+        is only necessary for client/server databases like mysql. If an sqlite
+        database is used (which it is by default), anigrate automatically 
+        creates it for you.
+    </p>
+</section>
+<section id='cmd-config'>
+<h1>config</h1>
+<p>        Output the currently used configuration in a format usable for 
+        a config file.
+    </p>
+</section>
+<section id='cmd-help'>
+<h1>help</h1>
+<p>        Display a help information screen listing all the commands and options.
+    </p>
+</section>
+<section id='cmd-version'>
+<h1>version</h1>
+<p>            Display anigrate version and copyright information.
+    </p>
+</section>
+<section id='seasoncmd-add'>
+<h1></h1>
+<p>    </p>
+</section>
+<section id='seasoncmd-length'>
+<h1>season length [length] [season]: (selector)</h1>
+<p>        Set the length in episodes for season [season].</p><p>        If [season] is not given, set length for the active season.
+    </p>
+</section>
+</section>
+<section id="configuration">
+<h1>Configuration</h1>
+<p>
+        There are a number of configuration options available to be set. The 
+        default location for your config file is in $HOME/.anigrate/config. You 
+        can print a list of options currently set by running `anigrate config`.
+
+        The following configuration options are available, run `anigrate help 
+        $OPTION` for more information about one of them, or run `anigrate help 
+        options` to see the complete list of extended information.
+        </p><nav><ul>
+<li><a href='#conf-anigrate.default_hist_limit'>anigrate.default_hist_limit</a></li>
+<li><a href='#conf-anigrate.default_log_limit'>anigrate.default_log_limit</a></li>
+<li><a href='#conf-anigrate.default_mode'>anigrate.default_mode</a></li>
+<li><a href='#conf-anigrate.default_sort'>anigrate.default_sort</a></li>
+<li><a href='#conf-anigrate.paranoia'>anigrate.paranoia</a></li>
+<li><a href='#conf-appearance.color_enabled'>appearance.color_enabled</a></li>
+<li><a href='#conf-appearance.date_format'>appearance.date_format</a></li>
+<li><a href='#conf-appearance.hist_column_sizes'>appearance.hist_column_sizes</a></li>
+<li><a href='#conf-appearance.hist_columns'>appearance.hist_columns</a></li>
+<li><a href='#conf-appearance.list_column_sizes'>appearance.list_column_sizes</a></li>
+<li><a href='#conf-appearance.list_columns'>appearance.list_columns</a></li>
+<li><a href='#conf-appearance.log_column_sizes'>appearance.log_column_sizes</a></li>
+<li><a href='#conf-appearance.log_columns'>appearance.log_columns</a></li>
+<li><a href='#conf-appearance.log_reversed'>appearance.log_reversed</a></li>
+<li><a href='#conf-appearance.old_cutoff'>appearance.old_cutoff</a></li>
+<li><a href='#conf-appearance.progress_format'>appearance.progress_format</a></li>
+<li><a href='#conf-appearance.time_format'>appearance.time_format</a></li>
+<li><a href='#conf-appearance.unicode_enabled'>appearance.unicode_enabled</a></li>
+<li><a href='#conf-color'>color</a></li>
+<li><a href='#conf-database.uri'>database.uri</a></li>
+<li><a href='#conf-link'>link</a></li>
+</ul></nav>
+<section id='conf-anigrate.default_hist_limit'>
+<h1>anigrate.default_hist_limit</h1>
+<small>        Default: 20</small><p>
+        The amount of log entries to display by default for the 'history' 
+        command.
+    </p>
+</section>
+<section id='conf-anigrate.default_log_limit'>
+<h1>anigrate.default_log_limit</h1>
+<small>        Default: 0</small><p>
+        The amount of log entries to display by default for the 'log' command.
+    </p>
+</section>
+<section id='conf-anigrate.default_mode'>
+<h1>anigrate.default_mode</h1>
+<small>        Default: "prefix"</small><p>
+        Specify a matching mode (prefix, suffix, contains, exact) to use 
+        by default in selectors where none is specified.
+    </p>
+</section>
+<section id='conf-anigrate.default_sort'>
+<h1>anigrate.default_sort</h1>
+<small>        Default: "split"</small><p>
+        Specify a sort mode (rating, activity, watched, title, split) to use
+        by default in selectors where none is specified.
+    </p>
+</section>
+<section id='conf-anigrate.paranoia'>
+<h1>anigrate.paranoia</h1>
+<small>        Default: 1</small><p>
+        Decides when to alert you when you are about to perform operations
+        on large amounts of series. This prevents you from accidentally typing
+        'anigrate remove' and destroying your database.</p><p>        A level of 0 never alerts you, even if the command would destroy the 
+        database. A level of 1 only alerts you for potentially 
+        database-destroying operations and a level of 2 alerts whenever you 
+        are about to modify more than one series at a time.
+    </p>
+</section>
+<section id='conf-appearance.color_enabled'>
+<h1>appearance.color_enabled</h1>
+<small>        Default: yes</small><p>
+        Whether to use color when outputting to the commandline.
+    </p>
+</section>
+<section id='conf-appearance.date_format'>
+<h1>appearance.date_format</h1>
+<small>        Default: %a %d %b, %Y</small><p>
+        The format used when displaying dates. Uses python strftime format
+        specifiers.
+    </p>
+</section>
+<section id='conf-appearance.hist_column_sizes'>
+<h1>appearance.hist_column_sizes</h1>
+<small>        Default: 28,18,16,6</small><p>
+        The sizes of the columns in a history entry. Each size is
+        given in the amount of characters it is allowed to take.
+    </p>
+</section>
+<section id='conf-appearance.hist_columns'>
+<h1>appearance.hist_columns</h1>
+<small>        Default: title,progress,date,time</small><p>
+        The columns displayed in the history list.</p><p>        Available columns:
+            title
+            progress
+            date
+            time
+    </p>
+</section>
+<section id='conf-appearance.list_column_sizes'>
+<h1>appearance.list_column_sizes</h1>
+<small>        Default: 48,7,6,7</small><p>
+        The sizes of the columns in the list of series. Each size is
+        given in the amount of characters it is allowed to take.
+    </p>
+</section>
+<section id='conf-appearance.list_columns'>
+<h1>appearance.list_columns</h1>
+<small>        Default: title,progress,season,rating</small><p>
+        The columns displayed when a list of series is required.</p><p>        Available columns:
+            title
+            progress
+            season
+            rating
+    </p>
+</section>
+<section id='conf-appearance.log_column_sizes'>
+<h1>appearance.log_column_sizes</h1>
+<small>        Default: 48,16,7</small><p>
+        The sizes of the columns in a log entry. Each size is
+        given in the amount of characters it is allowed to take.
+    </p>
+</section>
+<section id='conf-appearance.log_columns'>
+<h1>appearance.log_columns</h1>
+<small>        Default: episode,date,time</small><p>
+        The columns displayed when a log entry is output.</p><p>        Available columns:
+            episode
+            date
+            time
+    </p>
+</section>
+<section id='conf-appearance.log_reversed'>
+<h1>appearance.log_reversed</h1>
+<small>        Default: yes</small><p>
+        Whether to reverse the order in which log entries are outputted.
+        If no, log entries will be sorted from oldest to newest.
+    </p>
+</section>
+<section id='conf-appearance.old_cutoff'>
+<h1>appearance.old_cutoff</h1>
+<small>        Default: 14</small><p>
+        The amount of days an entry should be in the past before it is
+        considered "old" for display purposes.
+    </p>
+</section>
+<section id='conf-appearance.progress_format'>
+<h1>appearance.progress_format</h1>
+<small>        Default: season %S to ep %E</small><p>
+        The format to display progress indication in. You can use %S for
+        the season and %E for the episode the progress should express.
+    </p>
+</section>
+<section id='conf-appearance.time_format'>
+<h1>appearance.time_format</h1>
+<small>        Default: %H:%M</small><p>
+        The format used when displaying times. Uses python strftime format
+        specifiers.</p><p>    </p>
+</section>
+<section id='conf-appearance.unicode_enabled'>
+<h1>appearance.unicode_enabled</h1>
+<small>        Default: yes</small><p>
+        Whether to use box drawing characters when outputting to the 
+        commandline. Setting this to no will result in ascii characters
+        being used instead.
+    </p>
+</section>
+<section id='conf-color'>
+<h1>color</h1>
+<p>        This configuration section specifies the colors to use on the 
+        commandline when appearance.color_enabled is on.</p><p>        Each entry specifies the color for one particular type of text.
+        Colors are either in the format "bold,$COLOR" or just "$COLOR",
+        where $COLOR is one of "black", "red", "green", "yellow", "blue",
+        "magenta", "cyan" or "white".</p><p>        An empty entry uses the terminal's default colors.</p><p></p><h2>Default</h2><pre>
+            [color]
+            normal=
+            line=
+            unknown=bold,magenta
+            header=bold,yellow
+            log_line=bold,black
+            series_normal=bold,cyan
+            series_watching=bold,blue
+            series_dropped=bold,red
+            seasonnum=bold,magenta
+            epcount=bold,blue
+            date_new=bold,green
+            date_old=
+            time_new=bold,green
+            time_old=
+            log_new=bold,green
+            log_old=
+            score_top=bold,green
+            score_high=green
+            score_normal=white
+            score_low=red
+            score_critical=bold,red
+            stat_name=bold,white
+            stat_year=bold,cyan
+            stat_num=bold,magenta
+            stat_perc=bold,blue
+    </pre><p></p>
+</section>
+<section id='conf-database.uri'>
+<h1>database.uri</h1>
+<small>        Default: sqlite:///$HOME/.anigrate/config</small><p>
+        Specifies the database to connect to. This should be a valid sqlite 
+        connection string.</p><p>        For example: mysql://user:password@my-domain.org/anigrate-database
+    </p>
+</section>
+<section id='conf-link'>
+<h1>link</h1>
+<p>        This configuration section specifies how to build links to 
+        informational websites according to a series' category. Each entry in 
+        this section is the name of a category and each value the url of a 
+        website with information.</p><p>        The "default" entry is used when no entry is found for the category a
+        series is in.</p><p>        In the urls, %s is replaced by the title of the series information is 
+        requested for.</p><p></p><h2>Default</h2><pre>
+            [link]
+            default=http://en.wikipedia.org/wiki/Special:Search?search=%s
+            anime=http://myanimelist.net/anime.php?q=%s
+            tv=http://www.tv.com/search.php?qs=%s
+    </pre><p></p>
+</section>
+</section>
+<section id="configexample">
+<h1>Configuration Example</h1>
+<pre>
+### Put this in ~/.anigrate/config for a global configuration.
+## Can also be put in the same directory the anigrate binary is
+## called from as "anigraterc". This facilitates using specific
+## configuration for running it through wsgi or as a server.
+
+# General anigrate settings
+[anigrate]
+## The default sort method for selectors without one
+#default_sort=split
+
+# Database location examples
+[database]
+## Use sqlalchemy connection strings 
+#uri=sqlite:////home/myuser/.anigrate/db
+#uri=mysql://remoteuser:password@domain.tld:5432/anigratedb
+
+# Appearance configuration
+[appearance]
+## Whether colors are enabled at all
+#color_enabled=yes
+## Whether to use box-drawing unicode glyphs or ascii
+#unicode_enabled=yes
+
+# Weblist configuration
+[weblist]
+## Title displayed for list pages
+#title_list=Watch List
+## Title displayed for log pages
+#title_log=Watch Log
+## Title displayed for stats pages
+#title_stats=Watch Stats
+## Default selector to display
+#default=@title
+## CSS stylesheet to use
+#css=uri:http://mydomain.tld/anigrate.css
+#css=file:anigrate.css
+## File to include as a header on every page
+#header=header.html
+## File to include as a footer (in place of the "generated by..." message) on 
+## every page.
+#footer=footer.html
+
+# Links opened for series, by category
+[link]
+## Wikipedia opened when nothing else is known
+default=http://en.wikipedia.org/wiki/Special:Search?search=%s
+## If category=anime, open myanimelist
+anime=http://myanimelist.net/anime.php?q=%s
+## If category=tv, open tv.com
+tv=http://www.tv.com/search.php?qs=%s
+
+# Colors used by the commandline 
+[color]
+## General colors
+#normal=
+#unknown=bold,magenta
+#header=bold,yellow
+#log_line=bold,black
+## Series titles color in list
+#series_normal=bold,cyan
+#series_watching=bold,blue
+#series_dropped=bold,red
+## Watch log colors
+#seasonnum=bold,magenta
+#epcount=bold,blue
+## Score colors
+#score_top=bold,green
+#score_high=green
+#score_normal=white
+#score_low=red
+#score_critical=bold,red
+## Stat colors
+#stat_name=bold,white
+#stat_year=bold,cyan
+#stat_num=bold,magenta
+#stat_perc=bold,blue
+</pre>
+</section>
+

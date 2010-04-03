@@ -1,14 +1,14 @@
 import sys
 import os
 from optparse import OptionParser
-from pprint import pprint
 
 import sqlalchemy
 
-from anigrate.models import Series, Season, Watched, bind_session
+from anigrate.models import bind_session
 from anigrate.config import Config
 from anigrate.selector import Selector
-from anigrate.util import choose, debug, Commands
+from anigrate.util import choose, debug, Commands, Commands_Season
+from anigrate.commands.season import cm_season
 
 import anigrate.commands
 
@@ -135,6 +135,14 @@ def main():
         # Get matching commands
         commands = choose(Commands, command_name)
 
+        # Check for season functions
+        if len(commands) == 1 and commands[0][1] == cm_season:
+            if func_args:
+                command_name = func_args.pop(0)
+                commands = choose(Commands_Season, command_name)
+            else:
+                debug("Error: Please specify a season command.", False)
+
         # Check if command is unique
         if not commands:
             print("Error: command %s does not exist." % command_name)
@@ -164,9 +172,9 @@ def main():
 
         # Check for correct amount of arguments
         if hasattr(func, "minargs") and func.minargs > len(func_args):
-            debug("Error: Too few arguments specified", raise_exception=False)
+            debug("Error: Too few arguments specified", False)
         elif hasattr(func, "maxargs") and func.maxargs < len(func_args):
-            debug("Error: Too many arguments specified.", raise_exception=False)
+            debug("Error: Too many arguments specified.", False)
 
         # Check for any arguments that should be set to None
         func_args = [None if arg == "." else arg for arg in func_args]

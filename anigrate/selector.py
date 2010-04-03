@@ -1,4 +1,3 @@
-import datetime
 from math import floor
 
 from anigrate.models import Series, Watched, Session
@@ -152,8 +151,7 @@ class Selector(object):
         # Only display from matching series
         query = query.join((
             subquery,
-            subquery.c.id == Watched.series_id
-        ))
+            subquery.c.id == Watched.series_id))
 
         # Preload series objects
         query = query.options(eagerload('series'))
@@ -166,8 +164,7 @@ class Selector(object):
     @property
     def time(self):
         query = Session.query(
-            functions.sum(Series.duration.op("*")(Series.epsall))
-        )
+            functions.sum(Series.duration.op("*")(Series.epsall)))
 
         totalminutes = minutes = int(self.add_filters(query).one()[0])
         totaldays = minutes/1440.0
