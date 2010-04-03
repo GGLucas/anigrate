@@ -1,8 +1,8 @@
 from __future__ import print_function
 
 from anigrate.display import Display
-from anigrate.display.serieslist import ListDisplay
 from anigrate.config import Config
+from anigrate.util import showdate, showtime, rating_color
 
 class HistDisplay(Display):
     """
@@ -87,15 +87,15 @@ class HistDisplay(Display):
         line = ""
 
         # Get colors to use for columns
-        rating_color = self._rating_color(series.rating) if series.rating > 0 else "normal"
+        rcolor = rating_color(series.rating) if series.rating > 0 else "normal"
         normal_color = "normal"
 
         # Generate columns
         Columns = {
-            "title": (rating_color, series.title),
+            "title": (rcolor, series.title),
             "progress": self._progress(entry.seasonnum, entry.finishep),
-            "date": (normal_color, self._date(entry.time)),
-            "time": (normal_color, self._time(entry.time)),
+            "date": (normal_color, showdate(entry.time)),
+            "time": (normal_color, showtime(entry.time)),
         }
 
         # List columns in string

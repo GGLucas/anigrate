@@ -2,6 +2,7 @@ import datetime
 
 from anigrate.display.serieslist import ListDisplay
 from anigrate.config import Config
+from anigrate.util import showdate, showtime
 
 class LogDisplay(ListDisplay):
     def __init__(self, selector=None, series=None, header=None, footer=None, line=None, limit=None):
@@ -111,13 +112,13 @@ class LogDisplay(ListDisplay):
                     # Watch date
                     text = (
                         "date_old" if isold else "date_new",
-                        self._date(entry.time)
+                        showdate(entry.time)
                     )
                 elif column == "time":
                     # Watch time
                     text = (
                         "time_old" if isold else "time_new",
-                        self._time(entry.time)
+                        showtime(entry.time)
                     )
                 else:
                     # Unknown column

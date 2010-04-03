@@ -16,18 +16,6 @@ class Display(object):
         if header: self.header = header
         if footer: self.footer = footer
 
-    def _date(self, datetime):
-        """
-            Display a date in default format.
-        """
-        return datetime.strftime(Config.get("appearance", "date_format"))
-
-    def _time(self, datetime):
-        """
-            Display a date in default format.
-        """
-        return datetime.strftime(Config.get("appearance", "time_format"))
-
     def _column(self, text, size, color="normal", color_line="line", hsep=True, offset=0):
         """
             Format a string to represent a column
@@ -103,19 +91,6 @@ class Display(object):
         else:
             return ""
 
-    def _rating_color(self, rating):
-        """
-            Get the color to display for a certain rating.
-        """
-        return [
-                "unknown", "score_critical",
-                "score_critical", "score_critical",
-                "score_low", "score_low",
-                "score_normal", "score_normal",
-                "score_high", "score_high",
-                "score_top",
-            ][rating]
-
     def _progress(self, season, episode, color="normal"):
         """
             Get a list of color+text for the progress column.
@@ -123,6 +98,7 @@ class Display(object):
         text = Config.get("appearance", "progress_format")
         season = str(season)
         episode = str(episode)
+
         before = ""
 
         if "%S" in text:

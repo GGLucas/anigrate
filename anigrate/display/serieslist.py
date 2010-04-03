@@ -1,6 +1,7 @@
 from __future__ import print_function
 from anigrate.display import Display
 from anigrate.config import Config
+from anigrate.util import rating_color
 
 class ListDisplay(Display):
     """
@@ -70,7 +71,7 @@ class ListDisplay(Display):
         line = ""
 
         # Get colors to use for columns
-        rating_color = self._rating_color(series.rating)
+        rcolor = rating_color(series.rating)
         series_color = "series_normal" if series.finished else (
                        "series_dropped" if series.dropped else
                        "series_watching")
@@ -79,7 +80,7 @@ class ListDisplay(Display):
         Columns = {
             "title": (series_color, series.title),
             "season": (series_color, str(series.current)),
-            "rating": (rating_color, str(series.rating or "??")),
+            "rating": (rcolor, str(series.rating or "??")),
         }
 
         # Generate "progress" column

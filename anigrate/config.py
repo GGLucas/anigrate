@@ -81,6 +81,7 @@ normal=
 line=
 unknown=bold,magenta
 header=bold,yellow
+itemname=magenta
 log_line=bold,black
 series_normal=bold,cyan
 series_watching=bold,blue

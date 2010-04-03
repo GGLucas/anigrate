@@ -12,6 +12,7 @@ except ImportError:
 Commands = {}
 Commands_Order = []
 Commands_Season = {}
+Commands_Season_Order = []
 
 def choose(values, name, first_only=False, key_only=False,
                          allow_multi=True, value_only=False):
@@ -179,6 +180,44 @@ def verbose(line, level=1):
     if not Config.quiet:
         print(line)
 
+def parseprogress(progress, exit=True):
+    """
+        Parse progress string to a list of (current, total) tuples.
+    """
+    if progress:
+        seasons = []
+
+        for season in progress.split(","):
+            # Amount of seasons to create like this
+            if "*" in season:
+                season, times = season.split("*", 1)
+                times = checkint(times, "season multiplier", exit)
+            else:
+                times = 1
+
+            # Watched and total
+            if "/" in season:
+                watched, total = season.split("/")
+
+                if watched:
+                    watched = checkint(watched, "watched amount", exit)
+                else:
+                    watched = checkint(total, "total episodes", exit)
+
+                if total:
+                    total = checkint(total, "total episodes", exit)
+                else:
+                    total = watched
+            else:
+                watched = checkint(season, "watched amount", exit)
+                total = 0
+
+            seasons.extend([(watched, total),]*times)
+    else:
+        seasons = ((0, 0),)
+
+    return seasons
+
 def parsedate(string, error=True):
     """
         Attempt to parse a date string using the method available.
@@ -198,3 +237,28 @@ def parsedate(string, error=True):
         debug("Error: date is in an unknown format.", False)
     else:
         return None
+
+def showdate(datetime):
+    """
+        Display a date in default format.
+    """
+    return datetime.strftime(Config.get("appearance", "date_format"))
+
+def showtime(datetime):
+    """
+        Display a date in default format.
+    """
+    return datetime.strftime(Config.get("appearance", "time_format"))
+
+def rating_color(rating):
+    """
+        Get the color to display for a certain rating.
+    """
+    return [
+            "unknown", "score_critical",
+            "score_critical", "score_critical",
+            "score_low", "score_low",
+            "score_normal", "score_normal",
+            "score_high", "score_high",
+            "score_top",
+        ][rating]
