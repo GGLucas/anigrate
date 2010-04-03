@@ -1,9 +1,10 @@
-Anigrate
-simple cli watch list management
---------------------------------
+# Anigrate
+## simple cli watch list management
 
 Browse to http://anigrate.glacicle.org or run `anigrate help` for more
 recent and complete information.
+
+--------------------------------
 
 About
 =====
@@ -163,7 +164,7 @@ or to a file, the following format specifiers are available:
    Uses myanimelist.net's xml export format. When importing from
    myanimelist be sure to uncompress it before feeding it to anigrate; you
    can use pipes for this. For example:
-   $ gunzip -c animelist_0000_-_0000.xml.gz | anigrate import -
+   $ gunzip -c animelist\_0000\_-\_0000.xml.gz | anigrate import -
    myanimelist
 
 
