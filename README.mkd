@@ -1,6 +1,6 @@
 # Anigrate: simple cli watch list management
 
-Browse to http://anigrate.glacicle.org or run `anigrate help` for more
+Browse to [http://anigrate.glacicle.org] or run `anigrate help` for more
 recent and complete information.
 
 About
@@ -43,19 +43,19 @@ Features
 
 Contact
 =======
-Anigrate is written and maintained by Lucas de Vries <lucas@glacicle.org>. Feel 
+Anigrate is written and maintained by Lucas de Vries [<lucas@glacicle.org>]. Feel 
 free to send over an email for any bug reports or suggestions.
 
 
 Installation
 ============
 If you are an arch linux user, there is a package available at the arch
-user repository at http://aur.archlinux.org/packages.php?ID=33454
+user repository at [http://aur.archlinux.org/packages.php?ID=33454]
 
 You can also clone the git repository and simply copy the anigrate
 binary to a folder in your path.
 
-Web interface for git repository: http://git.glacicle.org/anigrate/
+Web interface for git repository: [http://git.glacicle.org/anigrate/]
 Clone: git clone git://glacicle.org/projects/anigrate.git
 
 
@@ -194,3 +194,10 @@ can print a list of options currently set by running `anigrate config`.
 The following configuration options are available, run `anigrate help
 $OPTION` for more information about one of them, or run `anigrate help
 options` to see the complete list of extended information.
+
+
+
+http://anigrate.glacicle.org: http://anigrate.glacicle.org
+http://git.glacicle.org/anigrate: http://git.glacicle.org/anigrate
+http://aur.archlinux.org/packages.php?ID=33454: http://aur.archlinux.org/packages.php?ID=33454
+<lucas@glacicle.org>: mailto:lucas@glacicle.org
