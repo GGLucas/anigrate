@@ -119,6 +119,7 @@ def cm_watch(selector, num=None, date=None):
         # Adapt watched counts
         series.epscurrent = num
         series.current_season.current_watched = num
+        series.eval_finished()
 
     Session.commit()
 

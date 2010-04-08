@@ -262,3 +262,7 @@ def rating_color(rating):
             "score_high", "score_high",
             "score_top",
         ][rating]
+
+def interactive_selector(func):
+    """ Display interactive selector when called with an empty selector. """
+    return func #TODO: implement

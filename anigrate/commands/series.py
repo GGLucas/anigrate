@@ -281,6 +281,7 @@ def cm_length(selector, value=None):
 
         series.epstotal = new
         series.current_season.episode_total = new
+        series.eval_finished()
 
     Session.commit()
 
