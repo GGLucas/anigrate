@@ -1,6 +1,9 @@
+from __future__ import print_function
+
 import sys
 import datetime
 
+from anigrate.models import Series
 from anigrate.config import Config
 
 try:
@@ -263,6 +266,208 @@ def rating_color(rating):
             "score_top",
         ][rating]
 
+def lcrop(string, size):
+    """ Resize a string to fit in size. """
+    if len(string) <= size:
+        return string.ljust(size)
+    else:
+        return string[:size - 2]+".."
+
+def rcrop(string, size):
+    """ Resize a string to fit in size from the right. """
+    if len(string) <= size:
+        return string.rjust(size)
+    else:
+        return string[:size - 2]+".."
+
+def fuzzymatch(string, target, caseinsensitive=True):
+    """ Calculate fuzzy match score between two series. """
+    if caseinsensitive:
+        string = string.lower()
+
+    # Perfect match
+    if string == target or not target:
+        return (1.0, [])
+
+    # Calculate offsets
+    strlen = len(string)
+    offsets = []
+    cursor = 0
+
+    for char in target:
+        i = 0
+        found = False
+        while cursor < strlen:
+            if char == string[cursor]:
+                offsets.append(i)
+                cursor += 1
+                found = True
+                break
+
+            cursor += 1
+            i += 1
+        if found:
+            continue
+        return (0.0, [])
+
+    # Calculate score
+    score = 0.0
+    maxcharscore = 1.0/len(target)
+    cursor = 0
+
+    for offset in offsets:
+        factor = 1.0
+
+        if offset > 0:
+            last = string[offset-1]
+
+            if last == ' ':
+                factor = 0.9
+            else:
+                factor = 1.0/(offset+1)
+
+        score += maxcharscore*factor
+
+    return (score, offsets)
+
+def fuzzyselect(selector):
+    """ Display a selector prompt. """
+    import curses
+    curses.setupterm()
+    clear = curses.tigetstr("el")
+    clearall = curses.tigetstr("ed")
+    up = curses.tigetstr("cuu1")
+    down = curses.tigetstr("cud1")
+    rev = curses.tigetstr("rev")
+    sgr0 = curses.tigetstr("sgr0")
+    char = curses.tigetstr("hpa")
+    zero = curses.tparm(char, 0)
+
+    import tty
+    import termios
+    import fcntl
+    import os
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+
+    series = selector.all()
+    subset = series[:]
+    selected = 0
+    scroll = 0
+    amount = Config.getint("anigrate", "matcher_items")
+
+    try:
+        tty.setraw(fd)
+        filt = ""
+        next = True
+
+        while True:
+            # Build list
+            num = 0
+            sys.stdout.write(zero + clear+"series> " + 
+                             filt)
+
+            for i, s in enumerate(subset[scroll:scroll + amount]):
+                data = (" " + lcrop(s.title, 50) + " " +
+                           rcrop(str(s.epscurrent),3) + " / " +
+                           rcrop(str(s.epstotal), 3) +
+                           rcrop(s.category, 10) + " "+repr(fuzzymatch(s.title, filt)))
+                if i == selected - scroll:
+                    sys.stdout.write(down + zero + clear +
+                                     rev + data + sgr0)
+                else:
+                    sys.stdout.write(down + zero + clear + data)
+                num += 1
+
+            # Set cursor
+            sys.stdout.write((down+zero+clear)*(amount-num))
+            sys.stdout.write(up*amount+curses.tparm(char, len(filt)+8))
+
+            # Wait for next character
+            next = sys.stdin.read(1)
+
+            if next == "\r":
+                # Stop searching
+                break
+            else:
+                # Expand filter
+                reval = False
+                if next == "\x7f":
+                    # Backspace
+                    if filt:
+                        filt = filt[:-1]
+                        reval = True
+                elif next == "\x03":
+                    # Control+c
+                    return
+                elif next == "\x1b":
+                    # Cursor key
+                    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+                    fcntl.fcntl(fd, fcntl.F_SETFL, flags|os.O_NONBLOCK)
+                    try:
+                        next = sys.stdin.read(2)
+                    except IOError:
+                        # Escape pressed
+                        return
+                    fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+
+                    if next == "[A":
+                        # Up
+                        selected -= 1
+
+                        if selected < 0:
+                            selected = len(subset) - 1
+                            scroll = selected - amount+1
+
+                            if scroll < 0:
+                                scroll = 0
+                        elif selected < scroll:
+                            scroll -= 1
+                    elif next == "[B":
+                        # Down
+                        selected += 1
+
+                        if selected >= len(subset):
+                            selected = 0
+                            scroll = 0
+                        elif selected >= scroll + amount:
+                            scroll += 1
+                else:
+                    filt += next
+                    reval = True
+
+                if reval:
+                    case = (filt == filt.lower())
+                    subset = map(lambda s: (fuzzymatch(s.title, filt, case), s), series)
+                    subset = filter(lambda s: s[0][0] != 0.0, subset)
+                    subset = sorted(subset, key=lambda s: s[0][0], reverse=True)
+                    subset = map(lambda s: s[1], subset)
+                    selected = 0
+
+    finally:
+        sys.stdout.write(zero+clearall)
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+    if subset:
+        return Series.id == subset[selected].id
+    else:
+        return
+
 def interactive_selector(func):
     """ Display interactive selector when called with an empty selector. """
-    return func #TODO: implement
+    def cmd(*args, **kwargs):
+        selector = args[0]
+
+        if not selector.filters and \
+           Config.getboolean("anigrate", "matcher_enabled"):
+            filt = fuzzyselect(selector)
+
+            if filt is None:
+                return
+            else:
+                selector.filters.append(filt)
+
+        return func(*args, **kwargs)
+    cmd.__name__ = func.__name__
+    cmd.__doc__ = func.__doc__
+    return cmd

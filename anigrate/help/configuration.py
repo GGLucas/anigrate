@@ -49,6 +49,23 @@ ConfigHelp = {
         are about to modify more than one series at a time.
     """,
 
+"anigrate.matcher_enabled":
+    """
+    anigrate.matcher_enabled
+        Default: yes
+
+        Whether to display an incremental series matcher when no selector is
+        specified on some commands.
+    """,
+
+"anigrate.matcher_items":
+    """
+    anigrate.matcher_items
+        Default: 15
+
+        How many items to display in the matcher list by default.
+    """,
+
 "database.uri":
     """
     database.uri

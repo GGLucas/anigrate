@@ -1,8 +1,9 @@
 from __future__ import print_function
 
 from anigrate.config import Config
-from anigrate.util import (register, selector, arguments, checkint, parsedate,
-                          showdate, showtime, rating_color)
+from anigrate.util import (register, selector, arguments, checkint,
+                           parsedate, showdate, showtime, rating_color,
+                           interactive_selector)
 from anigrate.display.serieslist import ListDisplay
 from anigrate.display.loglist import LogDisplay
 from anigrate.display.histlist import HistDisplay
@@ -24,6 +25,7 @@ def cm_list(selector):
 @register("log", shorthelp="display series watch log")
 @arguments(1, 2)
 @selector
+@interactive_selector
 def cm_log(selector, limit=None):
     """
     log [limit]: [selector]
@@ -62,13 +64,13 @@ def cm_hist(selector, limit=None, date=None):
 @register("get", shorthelp="get all series information")
 @arguments(1)
 @selector
+@interactive_selector
 def cm_get(selector):
     """
     get: [selector]
         Show all recorded information about a series and its seasons.
         Does not show the watch log (use `log` for that)
     """
-    ## TODO: If selector is empty, show incremental switch
 
     ATTRIBUTES = (
         ('ID', lambda s: ('normal', str(s.id))),
@@ -109,3 +111,4 @@ def cm_get(selector):
                 ))
 
         print()
+

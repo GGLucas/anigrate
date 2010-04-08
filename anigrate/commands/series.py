@@ -3,7 +3,7 @@ import datetime
 from anigrate.models import Session, Series, Season, Watched
 from anigrate.util import (register, selector, selector_literal,
                    arguments, promptfor, debug, checkint, verbose,
-                   paranoia, parseprogress, parsedate)
+                   paranoia, parseprogress, parsedate, interactive_selector)
 
 @register("add", shorthelp="add a new series")
 @arguments(0, 6)
@@ -115,13 +115,13 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None, 
 @register("category", shorthelp="set series category")
 @arguments(1, 2)
 @selector
+@interactive_selector
 @paranoia(2)
 def cm_category(selector, value=None):
     """
     category [category]: (selector)
         Mark all series matched by (selector) as having category [category].
     """
-    ## TODO: If selector is empty, show incremental switch
 
     for series in selector.all():
         orig = series.category
@@ -143,13 +143,13 @@ def cm_category(selector, value=None):
 @register("rate", shorthelp="set series rating")
 @arguments(1, 2)
 @selector
+@interactive_selector
 @paranoia(2)
 def cm_rate(selector, value=None):
     """
     rate [score]: [selector]
         Rate all series matched by [selector] with [score].
     """
-    ## TODO: If selector is empty, show incremental switch
 
     value = checkint(value, "rating")
 
@@ -178,6 +178,7 @@ def cm_rate(selector, value=None):
 @register("duration", shorthelp="set series duration")
 @arguments(1, 2)
 @selector
+@interactive_selector
 @paranoia(2)
 def cm_duration(selector, value=None):
     """
@@ -186,7 +187,6 @@ def cm_duration(selector, value=None):
         This is used to calculate total watching time, defaults to 24 minutes
         per episode for every series.
     """
-    ## TODO: If selector is empty, show incremental switch
 
     value = checkint(value, "duration")
 
@@ -215,13 +215,13 @@ def cm_duration(selector, value=None):
 @register("drop", shorthelp="mark a series as dropped")
 @arguments(1)
 @selector
+@interactive_selector
 @paranoia(2, verb="drop")
 def cm_drop(selector):
     """
     drop: [selector]
         Mark all series matched by [selector] as dropped.
     """
-    ## TODO: If selector is empty, show incremental switch
 
     for series in selector.all():
         if not series.dropped:
@@ -233,13 +233,13 @@ def cm_drop(selector):
 @register("undrop", shorthelp="mark a series as not dropped")
 @arguments(1)
 @selector
+@interactive_selector
 @paranoia(2, verb="undrop")
 def cm_undrop(selector):
     """
     undrop: [selector]
         Mark all series matched by [selector] as not dropped.
     """
-    ## TODO: If selector is empty, show incremental switch
 
     for series in selector.all():
         if series.dropped:
@@ -251,13 +251,13 @@ def cm_undrop(selector):
 @register("length", shorthelp="set series length")
 @arguments(1, 2)
 @selector
+@interactive_selector
 @paranoia(2)
 def cm_length(selector, value=None):
     """
     length [length]: (selector)
         Set the active season's length in episodes.
     """
-    ## TODO: If selector is empty, show incremental switch
 
     value = checkint(value, "rating")
 
@@ -288,13 +288,13 @@ def cm_length(selector, value=None):
 @register("remove", shorthelp="delete a series entry")
 @arguments(1)
 @selector
+@interactive_selector
 @paranoia(1, verb="remove", complete=True)
 def cm_remove(selector):
     """
     remove: [selector]
         Completely remove any series that match [selector].
     """
-    ## TODO: If selector is empty, show incremental switch
 
     for series in selector.all():
         # Delete series info

@@ -4,13 +4,14 @@ import datetime
 
 from anigrate.display.loglist import LogDisplay
 from anigrate.models import Session, Series, Season, Watched
-from anigrate.util import register, selector, arguments, debug, checkint, verbose, paranoia, parsedate
+from anigrate.util import register, selector, arguments, debug, checkint, verbose, paranoia, parsedate, interactive_selector
 
 RELATIVE, ABSOLUTE, BOTH = range(0,3)
 
 @register("watch", shorthelp="add an entry to the watch log")
 @arguments(1,3)
 @selector
+@interactive_selector
 @paranoia(2)
 def cm_watch(selector, num=None, date=None):
     """
@@ -43,7 +44,6 @@ def cm_watch(selector, num=None, date=None):
 
         See `help dates` for acceptable date formats.
     """
-    ## TODO: If selector is empty, show incremental switch
 
     # Parse date
     if date is not None:

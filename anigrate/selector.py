@@ -110,7 +110,8 @@ class Selector(object):
         self.string = self.string.replace("*", "%")
 
         # Filter on remaining string
-        self.filters.append((mode if mode else default_mode)(self.string))
+        if self.string:
+            self.filters.append((mode if mode else default_mode)(self.string))
 
         # Filter or category
         if category != "all":

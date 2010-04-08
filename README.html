@@ -303,6 +303,8 @@
 <li><a href='#cmd-version'>version</a></li>
 <li><a href='#seasoncmd-add'>season add</a></li>
 <li><a href='#seasoncmd-length'>season length</a></li>
+<li><a href='#seasoncmd-remove'>season remove</a></li>
+<li><a href='#seasoncmd-active'>season active</a></li>
 </ul></nav>
 <section id='cmd-list'>
 <h1>list: [selector]</h1>
@@ -462,6 +464,21 @@
 <p>        Set the length in episodes for season [season].</p><p>        If [season] is not given, set length for the active season.
     </p>
 </section>
+<section id='seasoncmd-remove'>
+<h1>season remove [number]: [selector]</h1>
+<p>        Remove the season with number [number] from series
+        matching [selector]. If [number] is not specified,
+        remove the currently active season.
+    </p>
+</section>
+<section id='seasoncmd-active'>
+<h1>season active [number]: [selector]</h1>
+<p>        Mark the season with number [number] as the active
+        season for all series matching [selector].</p><p>        If [number] is not specified, make the season with
+        the highest number active.</p><p>        Relative numbers such as +2 or -1 may be used with
+        [number].
+    </p>
+</section>
 </section>
 <section id="configuration">
 <h1>Configuration</h1>
@@ -478,6 +495,8 @@
 <li><a href='#conf-anigrate.default_log_limit'>anigrate.default_log_limit</a></li>
 <li><a href='#conf-anigrate.default_mode'>anigrate.default_mode</a></li>
 <li><a href='#conf-anigrate.default_sort'>anigrate.default_sort</a></li>
+<li><a href='#conf-anigrate.matcher_enabled'>anigrate.matcher_enabled</a></li>
+<li><a href='#conf-anigrate.matcher_items'>anigrate.matcher_items</a></li>
 <li><a href='#conf-anigrate.paranoia'>anigrate.paranoia</a></li>
 <li><a href='#conf-appearance.color_enabled'>appearance.color_enabled</a></li>
 <li><a href='#conf-appearance.date_format'>appearance.date_format</a></li>
@@ -521,6 +540,19 @@
 <small>        Default: "split"</small><p>
         Specify a sort mode (rating, activity, watched, title, split) to use
         by default in selectors where none is specified.
+    </p>
+</section>
+<section id='conf-anigrate.matcher_enabled'>
+<h1>anigrate.matcher_enabled</h1>
+<small>        Default: yes</small><p>
+        Whether to display an incremental series matcher when no selector is
+        specified on some commands.
+    </p>
+</section>
+<section id='conf-anigrate.matcher_items'>
+<h1>anigrate.matcher_items</h1>
+<small>        Default: 15</small><p>
+        How many items to display in the matcher list by default.
     </p>
 </section>
 <section id='conf-anigrate.paranoia'>
