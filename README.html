@@ -45,7 +45,7 @@
   section > section > small {
     font-size: 85%;
     font-weight: bold;
-    color: #444;
+    color: #555;
   }
 
   section > section > h1 {
@@ -332,10 +332,12 @@
     </p>
 </section>
 <section id='cmd-add'>
-<h1>add [category] [watched[/total][*seasons],..] [rating] [duration]: [name]</h1>
+<h1>add [category] [watched[/total][*seasons],..] [rating] [duration] [date]: [name]</h1>
 <p>        Add a new series entry with name specified by (name).
         Optionally, you can specify the category, duration, amount of episodes
-        watched, amount of episodes total, amount of seasons and rating.</p><p>        If no name is specified as selector, the add command will prompt for it 
+        watched, amount of episodes total, amount of seasons and rating.</p><p>        If date is specified, any watch log entries created will have their watch
+        dates set to this instead of the current date and time.
+        See `help dates` for acceptable date formats.</p><p>        If no name is specified as selector, the add command will prompt for it 
         and any other arguments not specified either.
     </p>
 </section>
@@ -448,8 +450,12 @@
     </p>
 </section>
 <section id='seasoncmd-add'>
-<h1></h1>
-<p>    </p>
+<h1>season add [watched[/total][*seasons],..] [number] [date]: [selector]</h1>
+<p>        Add new season(s) to specified series. Current progress for
+        each season can be specified as the first argument.</p><p>        [number] specifies what the season number of the first season
+        should be set to. If not given, [number] will default to the current
+        season increased by one.
+    </p>
 </section>
 <section id='seasoncmd-length'>
 <h1>season length [length] [season]: (selector)</h1>

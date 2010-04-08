@@ -170,7 +170,7 @@ class Selector(object):
         totaldays = minutes/1440.0
         times = []
 
-        for duration in  [525960,43200,10080, 1440, 60, 1]:
+        for duration in [525960,43200,10080, 1440, 60, 1]:
             amount = floor(minutes/duration)
             minutes -= amount*duration
             times.append(amount)

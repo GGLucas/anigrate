@@ -1,8 +1,10 @@
-from anigrate.models import Session
+import datetime
+from anigrate.models import Session, Season, Watched
 from anigrate.util import (register, arguments, selector, checkint,
-                            verbose, promptfor,
-                            paranoia, Commands_Season, 
+                            verbose, promptfor, parseprogress,
+                            paranoia, Commands_Season, parsedate,
                             Commands_Season_Order)
+
 
 @register("season", shorthelp="modify season information")
 def cm_season():
@@ -12,17 +14,62 @@ def cm_season():
         command reference.
     """
 
+
 @register("add", shorthelp="add a new season",
           dictionary=Commands_Season, sortorder=Commands_Season_Order)
 @arguments(1, 3)
 @selector
 @paranoia(2)
-def cm_season_add(selector, value=None, seasonnum=None):
+def cm_season_add(selector, progress=None, seasonnum=None, date=None):
     """
+    season add [watched[/total][*seasons],..] [number] [date]: [selector]
+        Add new season(s) to specified series. Current progress for
+        each season can be specified as the first argument.
 
+        [number] specifies what the season number of the first season
+        should be set to. If not given, [number] will default to the current
+        season increased by one.
     """
     ## TODO: If selector is empty, show incremental switch
-    pass
+
+    if date is not None:
+        date = parsedate(date)
+    else:
+        date = datetime.datetime.now()
+
+    seasons = parseprogress(progress)
+    seasonnum = checkint(seasonnum, "season number")
+
+    for series in selector.all():
+        number = seasonnum or series.current + 1
+
+        # Create every season
+        for num, (current, total) in enumerate(seasons):
+            # Season entry
+            season = Season(
+                num=num + number,
+                series=series,
+                episode_total=total,
+                current_watched=current,
+            )
+
+            series.current = season.num
+            Session.add(season)
+
+            # Log entry
+            if current > 0:
+                watched = Watched(
+                    season=season,
+                    seasonnum=season.num,
+                    series=series,
+                    time=date,
+                    startep=0,
+                    finishep=current,
+                )
+
+                Session.add(watched)
+
+    Session.commit()
 
 
 @register("length", shorthelp="set season length",
@@ -56,12 +103,14 @@ def cm_season_length(selector, value=None, seasonnum=None):
 
             # Convert to number
             new = checkint(new, "length", exit=False)
-            if new == None: continue
+
+            if new == None:
+                continue
         else:
             new = value
 
         if series.rating != new and value is not None:
-            verbose("Setting length to %d for season %d of %s..." % 
+            verbose("Setting length to %d for season %d of %s..." %
                       (new, seasonnum, series.title))
 
         series.epstotal = new

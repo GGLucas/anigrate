@@ -3,17 +3,21 @@ import datetime
 from anigrate.models import Session, Series, Season, Watched
 from anigrate.util import (register, selector, selector_literal,
                    arguments, promptfor, debug, checkint, verbose,
-                   paranoia, parseprogress)
+                   paranoia, parseprogress, parsedate)
 
 @register("add", shorthelp="add a new series")
-@arguments(0, 5)
+@arguments(0, 6)
 @selector_literal
-def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
+def cm_add(name=None, category=None, progress=None, rating=None, duration=None, date=None):
     """
-    add [category] [watched[/total][*seasons],..] [rating] [duration]: [name]
+    add [category] [watched[/total][*seasons],..] [rating] [duration] [date]: [name]
         Add a new series entry with name specified by (name).
         Optionally, you can specify the category, duration, amount of episodes
         watched, amount of episodes total, amount of seasons and rating.
+
+        If date is specified, any watch log entries created will have their watch
+        dates set to this instead of the current date and time.
+        See `help dates` for acceptable date formats.
 
         If no name is specified as selector, the add command will prompt for it 
         and any other arguments not specified either.
@@ -49,6 +53,11 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
     else:
         duration = 24
 
+    if date is not None:
+        date = parsedate(date)
+    else:
+        date = datetime.datetime.now()
+
     # Check category
     if category is None:
         category = ""
@@ -69,7 +78,7 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
         duration=duration,
     )
 
-    series.ctime = series.mtime = datetime.datetime.now()
+    series.ctime = series.mtime = date
     Session.add(series)
 
     # Create every season
@@ -90,7 +99,7 @@ def cm_add(name=None, category=None, progress=None, rating=None, duration=None):
                 season=season,
                 seasonnum=num+1,
                 series=series,
-                time=datetime.datetime.now(),
+                time=date,
                 startep=0,
                 finishep=current,
             )

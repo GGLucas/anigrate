@@ -55,7 +55,7 @@ HEADER = """<!DOCTYPE html>
   section > section > small {
     font-size: 85%;
     font-weight: bold;
-    color: #444;
+    color: #555;
   }
 
   section > section > h1 {
