@@ -164,7 +164,7 @@ def main():
         # Check if we should prepare a selector
         if hasattr(func, "selector"):
             if func.selector == 1:
-                selector_args = Selector(selector_args)
+                selector_args = Selector(selector_args, True)
             elif func.selector == 2:
                 selector_args = " ".join(selector_args)
 

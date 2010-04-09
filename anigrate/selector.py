@@ -2,7 +2,7 @@ from math import floor
 
 from anigrate.models import Series, Watched, Session
 from anigrate.config import Config
-from anigrate.util import choose
+from anigrate.util import choose, fuzzyselect, debug
 
 from sqlalchemy.orm import eagerload
 from sqlalchemy.sql import functions
@@ -31,14 +31,24 @@ MODE = {
     "contains": Series.title.contains,
     "suffix":   Series.title.endswith,
     "prefix":   Series.title.startswith,
+    "matcher":  0,
 }
 
 class Selector(object):
     """
         Build a query from a command line selector list.
     """
-    def __init__(self, selector=[]):
+    def __init__(self, selector=[], allow_matcher=False):
+        self._needs_matcher = False
         self.parse_selector(selector)
+
+        if self._needs_matcher and allow_matcher:
+            filt = fuzzyselect(self)
+
+            if filt:
+                self.filters.append(filt)
+            else:
+                debug("No series was selected...", True)
 
     def parse_selector(self, selector):
         # Instance variables
@@ -74,8 +84,11 @@ class Selector(object):
                 if filt: self.filters.extend(filt)
             elif opt[0] == "%":
                 # Change mode
-                mode = choose(MODE, opt[1:], allow_multi=False,
-                                             value_only=True)
+                if "matcher".startswith(opt[1:]):
+                    self._needs_matcher = True
+                else:
+                    mode = choose(MODE, opt[1:], allow_multi=False,
+                                                 value_only=True)
             elif opt[0] == "@":
                 # Change sort
                 if len(opt) > 1 and opt[1] == "-":

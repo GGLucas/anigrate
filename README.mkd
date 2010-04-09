@@ -87,6 +87,11 @@ Usage Examples
     anigrate watch +3: how i
     anigrate watch 12/110: ginga
 
+   Running just `anigrate watch` will display a matcher menu where you can
+   type a partial name and select the series you want to add a log entry for.
+   Since you did not specify a count, it will assume you watched a single 
+   episode.
+
  * Viewing your current progress
 
    `anigrate list: ginga eiyuu`
@@ -130,6 +135,11 @@ Selectors
  * %prefix
 
    Default behaviour: match all series that start with the selector.
+
+ * %matcher
+
+   Instead of immediately evaluating the selector, show a matcher window
+   displaying all series that match and letting you choose a single one.
 
  * @rating, @activity, @watched, @title, @-rating, @-activity, @-watched, @-title
 

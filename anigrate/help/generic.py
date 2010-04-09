@@ -27,6 +27,8 @@ Selectors:
       filter on this category
     %%exact, %%contains, %%suffix, %%prefix
       set match mode
+    %%matcher
+      use the interactive series matcher
     @rating, @activity, @watched, @title, @split
       set sort mode
 

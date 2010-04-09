@@ -28,6 +28,11 @@ Selectors:
     %prefix
         Default behaviour: match all series that start with the selector.
 
+    %matcher
+
+        Instead of immediately evaluating the selector, show a matcher window
+        displaying all series that match and letting you choose a single one.
+
     @rating, @activity, @watched, @title
     @-rating, @-activity, @-watched, @-title
         Set field to sort by, you can sort by series rating, series latest 

@@ -194,6 +194,11 @@
     $ anigrate watch 12/110: ginga
   </pre>
 
+  <p>Running just <code>$ anigrate watch</code> will display a matcher menu 
+  where you can type a partial name and select the series you want to add a log 
+  entry for.  Since you did not specify a count, it will assume you watched a 
+  single episode.</p>
+
   <h2>Viewing your current progress</h2>
   <a href="#cmd-list"><code>$ anigrate list: ginga eiyuu</code></a>
   <p>By using the <code>list</code> command, you can see how far along you
@@ -229,6 +234,10 @@
 
   <h2>%prefix</h2>
       <p>Default behaviour: match all series that start with the selector.</p>
+
+  <h2>matcher</h2>
+   <p>Instead of immediately evaluating the selector, show a matcher window
+   displaying all series that match and letting you choose a single one.</p>
 
   <h2>@rating, @activity, @watched, @title
   @-rating, @-activity, @-watched, @-title</h2>
