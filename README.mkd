@@ -65,7 +65,7 @@ Usage Examples
    In its most basic form, anigrate is rather easy to use, some examples
    for common watch list management tasks:
 
-#### Adding a new series
+## Adding a new series
 
    `anigrate add`
 
@@ -75,7 +75,7 @@ Usage Examples
     anigrate add anime: Ginga Eiyuu Densetsu
     anigrate add tv: how i met your mother
 
-#### Incrementing a series watch count
+## Incrementing a series watch count
 
    `anigrate watch: how i met your mother`
 
@@ -92,7 +92,7 @@ Usage Examples
    Since you did not specify a count, it will assume you watched a single 
    episode.
 
-#### Viewing your current progress
+## Viewing your current progress
 
    `anigrate list: ginga eiyuu`
 
@@ -185,7 +185,7 @@ acceptable.
 
 Commands
 ========
-See `%(command)s help $command` for extended information about the
+See `anigrate help $command` for extended information about the
 arguments and usage of a specific command.
 
 You can use the shortest unambiguous form to specify each of these
