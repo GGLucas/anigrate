@@ -41,7 +41,7 @@ def choose(values, name, first_only=False, key_only=False,
         match = [m[1] for m in match]
 
     # Check if we should collapse the list
-    if first_only or not allow_multi:
+    if match and (first_only or not allow_multi):
         return match[0]
     else:
         return match

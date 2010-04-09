@@ -16,10 +16,10 @@ and detailed statistics about your watching behaviour.
 
 Anigrate uses a simple sqlite database in your home directory by
 default, there's no need to configure or set anything up other than the
-main binary. However, if you want to, you can connect to a remote mysql
-database and keep track of your watch list centrally. The web interface
-can be run stand-alone with a simple command, but can also be used
-through wsgi (and, if flup is installed, you can run an fcgi or scgi
+main application. However, if you want to, you can connect to a remote
+mysql database and keep track of your watch list centrally. The web
+interface can be run stand-alone with a simple command, but can also be
+used through wsgi (and, if flup is installed, you can run an fcgi or scgi
 server).
 
 
@@ -52,8 +52,7 @@ Installation
 If you are an arch linux user, there is a package available at the arch
 user repository at <http://aur.archlinux.org/packages.php?ID=33454>
 
-You can also clone the git repository and simply copy the anigrate
-binary to a folder in your path.
+You can also clone the git repository and run `make install`.
 
 Web interface for git repository: <http://git.glacicle.org/anigrate/>  
 Clone: `git clone git://glacicle.org/projects/anigrate.git`

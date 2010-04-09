@@ -107,10 +107,11 @@ def cm_watch(selector, num=None, date=None):
         elif num < series.epscurrent:
             if num >= 0:
                 for entry in series.watched:
-                    if entry.startep >= num:
-                        Session.delete(entry)
-                    elif entry.finishep > num:
-                        entry.finishep = num
+                    if entry.seasonnum == series.current:
+                        if entry.startep >= num:
+                            Session.delete(entry)
+                        elif entry.finishep > num:
+                            entry.finishep = num
             else:
                 print("Error: watched count is smaller than 0"
                 " for series `%s`.." % series.title)

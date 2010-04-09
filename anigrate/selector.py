@@ -20,6 +20,8 @@ SORT = {
 FILTER = {
     "finished":  (Series.finished == True,
                   Series.dropped  == False,),
+    "completed": (Series.finished == True,
+                  Series.dropped  == False,),
     "watching":  (Series.finished == False,
                   Series.dropped  == False,),
     "dropped":   (Series.dropped  == True,),
