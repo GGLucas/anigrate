@@ -48,7 +48,7 @@ class Selector(object):
             if filt:
                 self.filters.append(filt)
             else:
-                debug("No series was selected...", True)
+                debug("No series was selected...", False)
 
     def parse_selector(self, selector):
         # Instance variables

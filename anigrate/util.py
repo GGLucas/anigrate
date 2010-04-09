@@ -371,7 +371,7 @@ def fuzzyselect(selector):
                 data = (" " + lcrop(s.title, 50) + " " +
                            rcrop(str(s.epscurrent),3) + " / " +
                            rcrop(str(s.epstotal), 3) +
-                           rcrop(s.category, 10) + " "+repr(fuzzymatch(s.title, filt)))
+                           rcrop(s.category, 10) + " ")
                 if i == selected - scroll:
                     sys.stdout.write(down + zero + clear +
                                      rev + data + sgr0)
