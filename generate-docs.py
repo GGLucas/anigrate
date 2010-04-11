@@ -10,7 +10,7 @@ import anigrate.commands
 
 HEADER = """<!DOCTYPE html>
 <title>Anigrate: simple cli watch list management</title>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
 <style>
   html {
     font-family: "Helvetica", sans-serif;

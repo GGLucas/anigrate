@@ -350,8 +350,6 @@ def fuzzyselect(selector):
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
 
-    series = selector.all()
-    subset = series[:]
     selected = 0
     scroll = 0
     amount = Config.getint("anigrate", "matcher_items")
@@ -360,6 +358,9 @@ def fuzzyselect(selector):
         tty.setraw(fd)
         filt = ""
         next = True
+
+        series = selector.all()
+        subset = series[:]
 
         while True:
             # Build list
@@ -370,7 +371,7 @@ def fuzzyselect(selector):
             for i, s in enumerate(subset[scroll:scroll + amount]):
                 data = (" " + lcrop(s.title, 50) + " " +
                            rcrop(str(s.epscurrent),3) + " / " +
-                           rcrop(str(s.epstotal), 3) +
+                           rcrop(str(s.epstotal or "??"), 3) +
                            rcrop(s.category, 10) + " ")
                 if i == selected - scroll:
                     sys.stdout.write(down + zero + clear +

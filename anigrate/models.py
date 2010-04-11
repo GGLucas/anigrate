@@ -3,7 +3,6 @@ import os
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, create_engine
 from sqlalchemy.orm import sessionmaker, relation, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql import and_, or_, not_
 
 from anigrate.config import Config
 

@@ -1,11 +1,11 @@
 from math import floor
 
+from sqlalchemy.orm import eagerload
+from sqlalchemy.sql import functions
+
 from anigrate.models import Series, Watched, Session
 from anigrate.config import Config
 from anigrate.util import choose, fuzzyselect, debug
-
-from sqlalchemy.orm import eagerload
-from sqlalchemy.sql import functions
 
 SORT = {
     "rating":   [(Series.rating, "desc")],
