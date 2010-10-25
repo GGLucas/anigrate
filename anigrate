@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # coding=utf-8
 import sys
 import os
@@ -2033,7 +2033,7 @@ def category(arg, selector):
 
     session.commit()
 # }}}
-    
+
 # {{{ [un]drop
 @command()
 def drop(arg, selector):
