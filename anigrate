@@ -2206,7 +2206,7 @@ def active(arg, selector):
             continue
 
         print("activate season = %d: %s..." % (sn, sel.title))
-        sel.current = season
+        sel.current = sn
         sel.eval_finished()
 
     session.commit()
