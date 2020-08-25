@@ -2,11 +2,11 @@ import sys
 import os
 import codecs
 
-from ConfigParser import ConfigParser
-from StringIO import StringIO
+from configparser import ConfigParser, ExtendedInterpolation
+from io import StringIO
 
 # Parser
-Config = ConfigParser()
+Config = ConfigParser(interpolation=ExtendedInterpolation())
 
 # Configuration constants
 Config.ANIGRATE_URI = "http://anigrate.glacicle.org"
@@ -133,10 +133,3 @@ if Config.getboolean("appearance", "color_enabled"):
 
         # Build escape code
         Config.itemcolor[item] = "\033[%d;%dm" % (attr, color)
-
-
-# Check if UTF-8 should be enabled
-if Config.getboolean("appearance", "unicode_enabled"):
-    # Force stdout and stderr to use utf-8
-    sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
-    sys.stderr = codecs.getwriter('utf-8')(sys.stderr)

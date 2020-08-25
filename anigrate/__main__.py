@@ -186,6 +186,3 @@ def main():
         debug("Error: Unable to communicate with the database or access denied.")
     except:
         debug("An unexpected error occurred, specify -d or --debug to see the python stack trace.")
-
-if __name__ == '__main__':
-    main()

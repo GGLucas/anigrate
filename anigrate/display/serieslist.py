@@ -19,8 +19,8 @@ class ListDisplay(Display):
             self.series = series
 
         # Get all columns and sizes from the configuration
-        self.columns = map(str.strip, Config.get("appearance", "list_columns") .split(","))
-        self.column_sizes = map(int, Config.get("appearance", "list_column_sizes") .split(","))
+        self.columns = list(map(str.strip, Config.get("appearance", "list_columns") .split(",")))
+        self.column_sizes = list(map(int, Config.get("appearance", "list_column_sizes") .split(",")))
 
         # Check if some sizes are missing
         self.column_count = len(self.columns)
@@ -118,7 +118,7 @@ class ListDisplay(Display):
             line = self.line(series)
 
             # Check if we just got a list of lines
-            if hasattr(line, "__iter__"):
+            if isinstance(line, list) or isinstance(line, tuple):
                 for line in line:
                     print(line)
             else:

@@ -20,7 +20,7 @@ class Display(object):
         """
             Format a string to represent a column
         """
-        if hasattr(text, "__iter__"):
+        if not isinstance(text, str):
             # Make a list for convenience
             text = list(text)
         else:
@@ -40,7 +40,7 @@ class Display(object):
         total_length = 0
         textitems = len(text)/2
 
-        for i in range(textitems):
+        for i in range(int(textitems)):
             itx = i*2+1
             textlen = len(text[itx])
 
@@ -77,7 +77,7 @@ class Display(object):
             # Add join separators at all sizes
             for i, length in enumerate(column_sizes):
                 # Check if join type was specified
-                if hasattr(length, "__iter__"):
+                if isinstance(length, list) or isinstance(length, tuple):
                     jtype = length[1]
                     length = length[0]
                 else:

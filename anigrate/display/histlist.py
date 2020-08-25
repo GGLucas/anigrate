@@ -23,8 +23,8 @@ class HistDisplay(Display):
             self.log = log
 
         # Get all columns and sizes from the configuration
-        self.columns = map(str.strip, Config.get("appearance", "hist_columns") .split(","))
-        self.column_sizes = map(int, Config.get("appearance", "hist_column_sizes") .split(","))
+        self.columns = list(map(str.strip, Config.get("appearance", "hist_columns") .split(",")))
+        self.column_sizes = list(map(int, Config.get("appearance", "hist_column_sizes") .split(",")))
 
         # Check if some sizes are missing
         self.column_count = len(self.columns)
@@ -47,7 +47,7 @@ class HistDisplay(Display):
             line = self.line(entry)
 
             # Check if we just got a list of lines
-            if hasattr(line, "__iter__"):
+            if not isinstance(line, str):
                 for line in line:
                     print(line)
             else:
